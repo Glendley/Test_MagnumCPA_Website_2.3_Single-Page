@@ -17,7 +17,11 @@
       "mcp__Claude_in_Chrome__computer",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(find /c/Users/Glenn/Documents /c/Users/Glenn/Downloads /c/Users/Glenn/Desktop -maxdepth 3 -type f \\\\\\( -iname \"*signature*\" -o -iname \"*sig*.png\" -o -iname \"*sig*.jpg\" \\\\\\) 2>/dev/null | head -40)",
+      "Bash(python -c \"from PIL import Image; im=Image.open\\(r'C:/Users/Glenn/Downloads/Max Email Signature \\(9\\).png'\\); print\\('size:', im.size\\)\")",
+      "Bash(python3 -c \"from PIL import Image; im=Image.open\\(r'C:/Users/Glenn/Downloads/Max Email Signature \\(9\\).png'\\); print\\('size:', im.size\\)\")",
+      "Bash(pip show *)"
     ]
   }
 }
