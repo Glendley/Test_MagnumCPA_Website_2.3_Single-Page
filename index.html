@@ -1150,11 +1150,9 @@ function openPortal(mode){
   var title   = document.getElementById('pmTitle');
   var sub     = document.getElementById('pmSub');
   overlay.classList.add('open');
-  // Already signed in? Go straight to the right dashboard.
+  // Already signed in? Go straight to the right full dashboard page.
   if (_currentUser){
-    tabs.style.display = 'none';
-    if (ADMIN_EMAILS.indexOf(_currentUser.email) > -1) renderAdminDashboard();
-    else renderClientDashboard();
+    window.location.href = (ADMIN_EMAILS.indexOf(_currentUser.email) > -1) ? 'admin.html' : 'dashboard.html';
     return;
   }
   if (mode === 'admin'){
@@ -1240,13 +1238,8 @@ async function doLogin(){
     pmMsg('This account does not have admin access.','error');
     if(btn) btn.disabled=false; return;
   }
-  try {
-    if (isAdmin) await renderAdminDashboard();
-    else await renderClientDashboard();
-  } catch(err){
-    pmMsg('Signed in, but the dashboard failed to load: ' + (err && err.message ? err.message : err), 'error');
-    if(btn) btn.disabled=false;
-  }
+  // Go to the full dashboard page (session carries over via Supabase).
+  window.location.href = isAdmin ? 'admin.html' : 'dashboard.html';
 }
 
 /* ---------- Auth: Register ---------- */
@@ -1259,8 +1252,14 @@ async function doRegister(){
   var sb = getSB();
   if (!sb){ pmMsg('Supabase not configured yet. See README.md.','error'); return; }
   pmMsg('Creating account…','success');
-  var resp = await sb.auth.signUp({ email: email, password: pass, options:{ data:{ full_name: name } } });
+  var resp = await sb.auth.signUp({ email: email, password: pass, options:{ data:{ name: name, full_name: name } } });
   if (resp.error){ pmMsg(resp.error.message,'error'); return; }
+  // If email confirmation is OFF, a session is returned now → go straight in.
+  if (resp.data && resp.data.session){
+    _currentUser = resp.data.user;
+    window.location.href = (ADMIN_EMAILS.indexOf(email) > -1) ? 'admin.html' : 'dashboard.html';
+    return;
+  }
   pmMsg('✅ Account created! Check your email to confirm, then sign in.','success');
 }
 
