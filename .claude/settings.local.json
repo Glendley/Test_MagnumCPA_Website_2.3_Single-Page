@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Glenn/Documents/Claude/**)",
+      "Bash(cp -rf 'C:/Users/Glenn/Documents/Claude/Magnum CPA Website/images/.' 'C:/Users/Glenn/Documents/Claude/single page magnum/images/')",
+      "Bash(cp -rf 'C:/Users/Glenn/Documents/Claude/Magnum CPA Website/file' 'C:/Users/Glenn/Documents/Claude/single page magnum/')",
+      "Bash(cp -f 'C:/Users/Glenn/Documents/Claude/Magnum CPA Website/site.js' 'C:/Users/Glenn/Documents/Claude/Magnum CPA Website/search.js' 'C:/Users/Glenn/Documents/Claude/Magnum CPA Website/organizer.js' 'C:/Users/Glenn/Documents/Claude/single page magnum/')",
+      "Bash(cp -f 'C:/Users/Glenn/Documents/Claude/Magnum CPA Website/client-portal.html' 'C:/Users/Glenn/Documents/Claude/Magnum CPA Website/admin-login.html' 'C:/Users/Glenn/Documents/Claude/Magnum CPA Website/admin.html' 'C:/Users/Glenn/Documents/Claude/Magnum CPA Website/admin-client.html' 'C:/Users/Glenn/Documents/Claude/Magnum CPA Website/dashboard.html' 'C:/Users/Glenn/Documents/Claude/single page magnum/')",
+      "Bash(mkdir -p .claude)",
+      "Bash(py --version)",
+      "Bash(npx --version)",
+      "mcp__mcp-registry__search_mcp_registry",
+      "mcp__Claude_in_Chrome__list_connected_browsers",
+      "mcp__Claude_in_Chrome__select_browser",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__Claude_in_Chrome__browser_batch",
+      "mcp__Claude_in_Chrome__computer"
+    ]
+  }
+}

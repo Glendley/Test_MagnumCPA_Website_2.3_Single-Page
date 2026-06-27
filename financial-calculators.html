@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Financial Calculators — Magnum CPA PC</title>
+<meta name="description" content="Handy financial calculators from Magnum CPA PC — tax, retirement, personal finance, savings, business, mortgage, loan, and vehicle calculators.">
+<link id="fa-cdn" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root{
+    --navy:#243a52;--navy-dark:#1c2e41;--navy-3:#13212f;
+    --gold:#f4a93c;--green:#7fae3a;--blue:#2f9fd6;
+    --text:#2b2b2b;--muted:#5e6b78;--bg:#ffffff;--bg-alt:#f4f6f8;
+    --border:#e2e7ec;--radius:10px;--maxw:1180px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{font-size:17px;scroll-behavior:smooth;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:#eef2f7;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh;
+    background:linear-gradient(rgba(9,20,46,.74),rgba(9,20,46,.82)),url('images/hero-bg.jpg');
+    background-size:cover;background-position:right 28%;background-attachment:fixed;background-color:#0d1f4a;
+  }
+  img{max-width:100%;height:auto;display:block;}
+  a{color:inherit;text-decoration:none;}
+  .container{max-width:var(--maxw);margin:0 auto;padding:0 20px;}
+
+  /* top bar */
+  .topbar{background:var(--navy-3);color:#cdd6df;font-size:.98rem;font-weight:500;}
+  .topbar .container{display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center;justify-content:space-between;padding:8px 20px;}
+
+  /* header / nav */
+  header.site-header{background:var(--navy);position:sticky;top:0;z-index:50;box-shadow:0 2px 10px rgba(0,0,0,.25);}
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 0;gap:16px;}
+  .brand{display:flex;align-items:center;gap:12px;color:#fff;}
+  .brand .globe,.brand .brand-text{display:none;}
+  .brand::before{content:"";display:block;width:260px;height:58px;
+    background:url('images/MAGNUM%20CPA%20LOGO.png') left center/contain no-repeat;
+    filter:drop-shadow(0 2px 10px rgba(0,0,0,.55));
+    transition:filter .25s,transform .25s;}
+  .brand:hover::before{filter:drop-shadow(0 4px 18px rgba(244,169,60,.55));transform:scale(1.03);}
+  .nav-toggle{display:none;background:transparent;border:0;cursor:pointer;padding:8px;border-radius:6px;}
+  .nav-toggle span{display:block;width:24px;height:2px;background:#fff;margin:5px 0;transition:.3s;}
+  nav.main-nav > ul{list-style:none;display:flex;flex-wrap:wrap;gap:4px 6px;justify-content:flex-end;align-items:center;}
+  nav.main-nav a{color:#e9eef3;font-size:.82rem;font-weight:600;letter-spacing:.4px;padding:8px 11px;border-radius:6px;
+    text-transform:uppercase;transition:background .2s,color .2s;white-space:nowrap;display:inline-block;}
+  nav.main-nav a:hover,nav.main-nav a.active{background:var(--gold);color:var(--navy-dark);}
+  .has-sub{position:relative;}
+  .submenu{position:absolute;top:100%;left:0;min-width:230px;background:var(--navy-dark);border-radius:8px;
+    box-shadow:0 12px 30px rgba(0,0,0,.35);padding:6px;display:none;flex-direction:column;gap:2px;z-index:60;list-style:none;}
+  .has-sub:hover .submenu{display:flex;}
+  .submenu li{width:100%;}
+  .submenu a{display:block;text-align:left;border-radius:5px;}
+
+  /* page banner */
+  .page-hero{position:relative;background:url('images/hero-bg.jpg') right 28%/cover no-repeat;color:#fff;
+    text-align:center;padding:74px 20px;overflow:hidden;}
+  .page-hero::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,22,58,.55),rgba(8,22,58,.78));}
+  .page-hero h1{position:relative;z-index:2;font-family:Georgia,'Times New Roman',serif;font-size:3rem;font-weight:700;letter-spacing:.5px;}
+  .page-hero p{position:relative;z-index:2;color:#dbe4f5;margin-top:8px;}
+
+  /* sections */
+  .section{padding:60px 0;}
+
+  /* buttons */
+  .btn{display:inline-block;background:var(--gold);color:var(--navy-dark);font-weight:700;padding:12px 26px;border-radius:8px;
+    border:0;cursor:pointer;letter-spacing:.4px;font-size:.95rem;transition:transform .15s,box-shadow .2s;}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(244,169,60,.4);}
+
+  /* calculators */
+  .calc-cat{margin-bottom:34px;}
+  .calc-cat h2{color:#fff;font-size:1.3rem;margin-bottom:6px;}
+  .calc-cat h2:after{content:"";display:block;width:54px;height:4px;background:var(--gold);margin-top:10px;border-radius:2px;}
+  .calc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:18px;}
+  .calc-card{background:#fff;color:var(--text);border-radius:10px;padding:16px 18px;border-left:4px solid var(--gold);
+    box-shadow:0 8px 20px rgba(0,0,0,.18);transition:transform .15s,box-shadow .2s;}
+  .calc-card:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(0,0,0,.28);}
+  .calc-card b{display:block;color:var(--navy);font-size:.98rem;}
+  .calc-card span{color:var(--muted);font-size:.85rem;}
+  @media(max-width:860px){.calc-grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:560px){.calc-grid{grid-template-columns:1fr;}}
+
+  /* CTA band */
+  .cta-band{background:var(--navy-3);color:#fff;text-align:center;padding:62px 0;}
+  .cta-band h2{font-size:1.9rem;margin-bottom:10px;}
+  .cta-band p{color:#cdd6df;margin-bottom:24px;}
+
+  /* search */
+  .search-li a{font-size:1.05rem;}
+  .search-overlay{position:fixed;inset:0;background:rgba(8,18,40,.78);display:none;z-index:200;padding:84px 16px 16px;}
+  .search-overlay.open{display:block;}
+  .search-box{max-width:640px;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 30px 70px rgba(0,0,0,.5);}
+  .search-top{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border);}
+  .search-ic{font-size:1.2rem;}
+  .search-top input{flex:1;border:0;outline:none;font-size:1.1rem;color:#222;font-family:inherit;background:transparent;}
+  .search-close{background:transparent;border:0;font-size:1.7rem;line-height:1;cursor:pointer;color:var(--muted);padding:0 4px;}
+  .search-results{max-height:62vh;overflow:auto;}
+  .search-results a{display:block;padding:14px 18px;border-bottom:1px solid #eef1f5;color:var(--navy);}
+  .search-results a:hover{background:#f4f6f8;}
+  .search-results a b{display:block;font-size:1rem;}
+  .search-results a span{font-size:.86rem;color:var(--muted);}
+  .search-none{padding:20px 18px;color:var(--muted);}
+
+  /* floating "Book a Consultation" CTA */
+  .book-fab{position:fixed;right:22px;bottom:22px;z-index:90;background:var(--gold);color:var(--navy-dark);
+    font-weight:800;padding:14px 24px;border-radius:40px;display:inline-flex;align-items:center;gap:8px;letter-spacing:.3px;
+    box-shadow:0 12px 30px rgba(244,169,60,.5);transition:transform .15s,box-shadow .2s;animation:bookpulse 2.8s ease-in-out infinite;}
+  .book-fab:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(244,169,60,.7);}
+  @keyframes bookpulse{0%,100%{box-shadow:0 12px 30px rgba(244,169,60,.45);}50%{box-shadow:0 14px 44px rgba(244,169,60,.85);}}
+  @media(max-width:560px){.book-fab{right:14px;bottom:14px;padding:12px 18px;font-size:.92rem;}}
+
+  /* footer */
+  footer{background:var(--navy-3);color:#aebccb;padding:46px 0 22px;margin-top:20px;}
+  .foot-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:30px;margin-bottom:28px;}
+  footer h4{color:#fff;font-size:1rem;margin-bottom:13px;}
+  footer ul{list-style:none;}
+  footer li{margin-bottom:8px;font-size:.9rem;}
+  footer a:hover{color:var(--gold);}
+  .social{display:flex;gap:12px;justify-content:center;margin:6px 0 22px;}
+  .social a{width:40px;height:40px;border-radius:50%;background:var(--gold);color:var(--navy-dark);display:grid;place-items:center;font-size:1.05rem;transition:transform .15s,filter .2s;}
+  .social a:hover{transform:translateY(-3px);filter:brightness(1.06);}
+  .foot-copy{border-top:1px solid #2a3654;padding-top:18px;font-size:.82rem;text-align:center;}
+
+  /* responsive */
+  @media (max-width:980px){.foot-grid{grid-template-columns:1fr 1fr;}}
+  @media (max-width:980px){
+    body{background-attachment:scroll;}
+    .nav-toggle{display:block;}
+    nav.main-nav{position:absolute;top:100%;left:0;right:0;background:var(--navy-dark);max-height:0;overflow:hidden;transition:max-height .35s ease;}
+    nav.main-nav.open{max-height:760px;overflow:auto;}
+    nav.main-nav > ul{flex-direction:column;gap:0;padding:8px 0;align-items:stretch;}
+    nav.main-nav li{width:100%;}
+    nav.main-nav a{display:block;padding:13px 24px;border-radius:0;border-bottom:1px solid #2f4a66;text-align:left;}
+    .submenu{position:static;display:none;box-shadow:none;background:#0f2236;padding:0;min-width:0;}
+    .has-sub.open .submenu{display:flex;}
+    .submenu a{padding-left:40px;}
+    .page-hero h1{font-size:2.1rem;}
+  }
+  @media (max-width:600px){
+    .container{padding:0 16px;}
+    .topbar .container{justify-content:center;text-align:center;gap:2px 14px;font-size:.74rem;padding:7px 14px;}
+    .foot-grid{grid-template-columns:1fr;}
+    .page-hero{padding:54px 16px;}
+    .page-hero h1{font-size:1.7rem;}
+    .section{padding:46px 0;}
+    .brand::before{width:200px;height:46px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Top contact bar ===== -->
+<div class="topbar">
+  <div class="container">
+    <span>📞 (916) 616-1789 &nbsp;·&nbsp; ✉️ ask@magnumcpa.com</span>
+    <span>🕘 Mon–Fri 9:00am – 5:00pm &nbsp;·&nbsp; Sat–Sun 2:00pm – 6:00pm</span>
+  </div>
+</div>
+
+<!-- ===== Header / Navigation ===== -->
+<header class="site-header">
+  <div class="container nav-inner">
+    <a href="index.html#home" class="brand" aria-label="Magnum CPA PC"></a>
+
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav class="main-nav" id="mainNav">
+      <ul>
+        <li><a href="index.html#home">Home</a></li>
+        <li><a href="index.html#about">About Us</a></li>
+        <li><a href="index.html#services">Services</a></li>
+        <li class="has-sub">
+          <a href="#" class="sub-toggle active">Resources ▾</a>
+          <ul class="submenu">
+            <li><a href="index.html#client-newsletter">Client Newsletter</a></li>
+            <li><a href="index.html#tax-planning-newsletter">Tax Planning Newsletter</a></li>
+            <li><a href="index.html#tax-videos">Tax Videos</a></li>
+            <li><a href="financial-calculators.html">Financial Calculators</a></li>
+          </ul>
+        </li>
+        <li><a href="client-portal.html" target="_blank" rel="noopener">Client Portal</a></li>
+        <li><a href="admin-login.html" target="_blank" rel="noopener">Admin Login</a></li>
+        <li><a href="index.html#request">Request Consultation</a></li>
+        <li><a href="index.html#contact">Contact Us</a></li>
+        <li class="search-li"><a href="#" class="search-btn" aria-label="Search the site">🔍</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<section class="page-hero"><h1>Financial Calculators</h1><p>Handy tools to provide insight into your financial questions.</p></section>
+
+<section class="section">
+  <div class="container">
+
+    <div class="calc-cat">
+      <h2>Tax Calculators</h2>
+      <div class="calc-grid">
+        <div class="calc-card"><b>Payroll Deductions</b><span>Estimate withholding from your paychecks.</span></div>
+        <div class="calc-card"><b>1040 Tax Calculator</b><span>Compute federal income tax liability.</span></div>
+        <div class="calc-card"><b>Marginal Tax Calculator</b><span>Determine your effective tax rate.</span></div>
+        <div class="calc-card"><b>Taxable vs. Tax-Advantaged Investments</b><span>Compare investment account types.</span></div>
+        <div class="calc-card"><b>Earned Income Credit (EIC)</b><span>Check refundable credit eligibility.</span></div>
+        <div class="calc-card"><b>Estate Tax Planner</b><span>Project estate tax obligations.</span></div>
+      </div>
+    </div>
+
+    <div class="calc-cat">
+      <h2>Retirement &amp; Planning</h2>
+      <div class="calc-grid">
+        <div class="calc-card"><b>Roth vs. Traditional IRA</b><span>Compare retirement account options.</span></div>
+        <div class="calc-card"><b>Retirement Planner</b><span>Forecast your retirement readiness.</span></div>
+        <div class="calc-card"><b>Roth IRA Conversion</b><span>Evaluate conversion strategy benefits.</span></div>
+        <div class="calc-card"><b>Social Security Benefits</b><span>Estimate your benefit amounts.</span></div>
+        <div class="calc-card"><b>Required Minimum Distribution</b><span>Calculate your RMD amounts.</span></div>
+        <div class="calc-card"><b>Retirement Shortfall</b><span>Identify funding gaps.</span></div>
+        <div class="calc-card"><b>401(k) Savings Calculator</b><span>Project retirement savings growth.</span></div>
+        <div class="calc-card"><b>Retirement Income</b><span>Determine sustainable withdrawals.</span></div>
+      </div>
+    </div>
+
+    <div class="calc-cat">
+      <h2>Personal Finance</h2>
+      <div class="calc-grid">
+        <div class="calc-card"><b>Credit Assessment</b><span>Evaluate your creditworthiness.</span></div>
+        <div class="calc-card"><b>Home Budget Analysis</b><span>Track income and expenses.</span></div>
+        <div class="calc-card"><b>Credit Card Optimizer</b><span>Recommend optimal card usage.</span></div>
+        <div class="calc-card"><b>Student Budget</b><span>Manage student finances.</span></div>
+        <div class="calc-card"><b>Credit Card Payoff</b><span>Calculate your payoff timeline.</span></div>
+        <div class="calc-card"><b>Life Insurance Needs</b><span>Determine coverage requirements.</span></div>
+        <div class="calc-card"><b>Student Loan Payoff</b><span>Evaluate repayment strategies.</span></div>
+        <div class="calc-card"><b>Net Worth</b><span>Track total assets and liabilities.</span></div>
+      </div>
+    </div>
+
+    <div class="calc-cat">
+      <h2>Savings &amp; Investments</h2>
+      <div class="calc-grid">
+        <div class="calc-card"><b>Savings Goals</b><span>Required monthly contributions.</span></div>
+        <div class="calc-card"><b>Savings Calculator</b><span>Project account growth.</span></div>
+        <div class="calc-card"><b>Savings, Taxes &amp; Inflation</b><span>Model your real returns.</span></div>
+        <div class="calc-card"><b>College Savings</b><span>Project education funding needs.</span></div>
+        <div class="calc-card"><b>Compound Interest</b><span>Illustrate growth impact.</span></div>
+        <div class="calc-card"><b>Investment Distributions</b><span>Calculate withdrawal amounts.</span></div>
+        <div class="calc-card"><b>Investment Goal Calculator</b><span>Determine required contributions.</span></div>
+      </div>
+    </div>
+
+    <div class="calc-cat">
+      <h2>Business Calculators</h2>
+      <div class="calc-grid">
+        <div class="calc-card"><b>Cash Flow Calculator</b><span>Analyze business liquidity.</span></div>
+        <div class="calc-card"><b>Working Capital Needs</b><span>Operational funding requirements.</span></div>
+        <div class="calc-card"><b>Equipment Lease vs. Buy</b><span>Compare financing methods.</span></div>
+        <div class="calc-card"><b>Financial Ratios</b><span>Analyze business performance.</span></div>
+        <div class="calc-card"><b>Breakeven Analysis</b><span>Determine profitability threshold.</span></div>
+        <div class="calc-card"><b>Business Valuation</b><span>Estimate company worth.</span></div>
+      </div>
+    </div>
+
+    <div class="calc-cat">
+      <h2>Home Ownership</h2>
+      <div class="calc-grid">
+        <div class="calc-card"><b>ARM vs. Fixed Rate Mortgage</b><span>Compare mortgage types.</span></div>
+        <div class="calc-card"><b>Maximum Mortgage</b><span>Determine affordable purchase price.</span></div>
+        <div class="calc-card"><b>Mortgage Qualifier</b><span>Assess lending qualification.</span></div>
+        <div class="calc-card"><b>Mortgage Loan (PITI)</b><span>Compute monthly payments.</span></div>
+        <div class="calc-card"><b>15 vs. 30-Year Mortgage</b><span>Evaluate term options.</span></div>
+        <div class="calc-card"><b>Refinance Breakeven</b><span>Determine refinancing benefits.</span></div>
+        <div class="calc-card"><b>Adjustable Rate Mortgage</b><span>Project ARM payments.</span></div>
+        <div class="calc-card"><b>Rent vs. Buy</b><span>Compare housing options.</span></div>
+      </div>
+    </div>
+
+    <div class="calc-cat">
+      <h2>Loan Calculators</h2>
+      <div class="calc-grid">
+        <div class="calc-card"><b>Amortizing Loan Calculator</b><span>Calculate loan payments.</span></div>
+        <div class="calc-card"><b>Loan Comparison</b><span>Evaluate multiple loan offers.</span></div>
+        <div class="calc-card"><b>Loan Prequalification</b><span>Assess borrowing capacity.</span></div>
+      </div>
+    </div>
+
+    <div class="calc-cat">
+      <h2>Vehicle Financing</h2>
+      <div class="calc-grid">
+        <div class="calc-card"><b>Rebate or Low-Interest Financing</b><span>Compare incentive options.</span></div>
+        <div class="calc-card"><b>Auto Lease vs. Buy</b><span>Evaluate acquisition methods.</span></div>
+        <div class="calc-card"><b>Auto Loans</b><span>Calculate vehicle payments.</span></div>
+        <div class="calc-card"><b>Home Equity vs. Auto Loan</b><span>Compare financing sources.</span></div>
+      </div>
+    </div>
+
+    <div class="cta-band" style="border-radius:14px;">
+      <div class="container">
+        <h2>Want a personalized analysis?</h2>
+        <p>Our team will run the numbers with you and build a plan around your goals.</p>
+        <a href="index.html#request" class="btn">Book a Free Consultation</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div>
+        <div class="brand" style="margin-bottom:12px;"></div>
+        <p style="font-size:.9rem;">Max Drew, CPA &amp; Financial Coach.<br>Trusted by Ramsey for 10+ years.</p>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="index.html#about">About Us</a></li>
+          <li><a href="index.html#services">Services</a></li>
+          <li><a href="index.html#contact">Contact Us</a></li>
+          <li><a href="index.html#request">Request Consultation</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="index.html#client-newsletter">Client Newsletter</a></li>
+          <li><a href="index.html#tax-planning-newsletter">Tax Planning Newsletter</a></li>
+          <li><a href="index.html#tax-videos">Tax Videos</a></li>
+          <li><a href="financial-calculators.html">Financial Calculators</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="social">
+      <a href="https://www.facebook.com/max.drew.522" target="_blank" rel="noopener" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+      <a href="https://www.instagram.com/magnumcpa11/" target="_blank" rel="noopener" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+      <a href="https://www.youtube.com/@MaxDrew" target="_blank" rel="noopener" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+      <a href="https://www.threads.com/@magnumcpa11?xmt=AQG0ulpk6R3kK_t4bDitznWtQA3G7iO-LKH2PQMVhY07s6E" target="_blank" rel="noopener" aria-label="Threads"><i class="fa-brands fa-threads"></i></a>
+      <a href="https://x.com/MagnumCPA11" target="_blank" rel="noopener" aria-label="X"><i class="fa-brands fa-x-twitter"></i></a>
+      <a href="https://www.quora.com/profile/Magnum-CPA" target="_blank" rel="noopener" aria-label="Quora"><i class="fa-brands fa-quora"></i></a>
+    </div>
+    <div class="foot-copy">© <span id="year"></span> Magnum CPA PC. All rights reserved.</div>
+  </div>
+</footer>
+
+<!-- ===== Floating Book a Consultation CTA ===== -->
+<a class="book-fab" href="index.html#request">📅 Book a Consultation</a>
+
+<script>
+  /* Nav: mobile toggle + dropdown + year */
+  (function(){
+    var toggle = document.getElementById('navToggle');
+    var nav = document.getElementById('mainNav');
+    if (toggle && nav){
+      toggle.addEventListener('click', function(){
+        nav.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', nav.classList.contains('open'));
+      });
+    }
+    document.querySelectorAll('.has-sub > .sub-toggle').forEach(function(a){
+      a.addEventListener('click', function(e){
+        if (window.matchMedia('(max-width:860px)').matches){
+          e.preventDefault();
+          a.parentNode.classList.toggle('open');
+        }
+      });
+    });
+    var y = document.getElementById('year');
+    if (y) y.textContent = new Date().getFullYear();
+  })();
+
+  /* Site search (links back to the single page's sections) */
+  (function(){
+    var INDEX = [
+      {title:'Home', url:'index.html#home',
+       snippet:"California's premier partner for strategic growth & tax advantage.",
+       text:'home magnum cpa pc max drew strategic growth tax advantage proactive accounting expert tax planning financial coaching ramsey trusted consultation california'},
+      {title:'About Us', url:'index.html#about',
+       snippet:'Our story, founder Max Drew, and The Magnum Advantage.',
+       text:'about us max magnum drew founder california professional corporation financial partners magnum advantage bbb accredited better business bureau trusted by ramsey best business rate sacramento history mission'},
+      {title:'Services', url:'index.html#services',
+       snippet:'Tax preparation & planning, bookkeeping, consulting, future security.',
+       text:'services tax preparation planning bookkeeping payroll business consulting future security wealth management retirement estate planning filings liabilities growth efficiency'},
+      {title:'Client Newsletter', url:'index.html#client-newsletter',
+       snippet:'Monthly updates, firm news, and money tips.',
+       text:'client newsletter mid-year money check-in refund last-minute filing tips updates subscribe firm news'},
+      {title:'Tax Planning Newsletter', url:'index.html#tax-planning-newsletter',
+       snippet:'Strategy articles for proactive tax savings.',
+       text:'tax planning newsletter retirement contributions 401k ira hsa small business entity llc s-corp sole proprietor charitable giving donor advised capital gains harvesting'},
+      {title:'Tax Videos', url:'index.html#tax-videos',
+       snippet:'Plain-English videos on key tax topics.',
+       text:'tax videos understanding w-2 deductions credits quarterly taxes freelancers small business watch learn'},
+      {title:'Financial Calculators', url:'financial-calculators.html',
+       snippet:'Tax, retirement, mortgage, loan, savings & business calculators.',
+       text:'financial calculators tax payroll 1040 marginal estate retirement roth ira 401k social security rmd mortgage piti arm loan amortization auto savings college net worth business cash flow breakeven valuation rent vs buy'},
+      {title:'Client Portal', url:'client-portal.html', target:true,
+       snippet:'Log in or sign up to access your documents.',
+       text:'client portal login sign up account documents upload requirements profile messages chat dashboard secure'},
+      {title:'Contact Us', url:'index.html#contact',
+       snippet:'Phone, email, and our Sacramento office location.',
+       text:'contact us phone 916 616 1789 email info ask magnumcpa find us 907 green moss drive sacramento ca 95831 map directions location office hours'},
+      {title:'Request a Consultation', url:'index.html#request',
+       snippet:'Request your free consultation with Max Drew, CPA.',
+       text:'request consultation free appointment schedule book meeting max drew cpa tax planning preparation bookkeeping financial coaching preferred date service'}
+    ];
+
+    function escapeHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    var ov = document.createElement('div');
+    ov.className = 'search-overlay';
+    ov.innerHTML =
+      '<div class="search-box">' +
+        '<div class="search-top">' +
+          '<span class="search-ic">🔍</span>' +
+          '<input type="text" id="siteSearchInput" placeholder="Search the site..." autocomplete="off">' +
+          '<button class="search-close" aria-label="Close search">&times;</button>' +
+        '</div>' +
+        '<div class="search-results" id="siteSearchResults"></div>' +
+      '</div>';
+    document.body.appendChild(ov);
+
+    var input = ov.querySelector('#siteSearchInput');
+    var results = ov.querySelector('#siteSearchResults');
+
+    function openSearch(){ ov.classList.add('open'); input.value=''; render(''); setTimeout(function(){ input.focus(); }, 40); }
+    function closeSearch(){ ov.classList.remove('open'); }
+
+    function render(q){
+      q = q.trim().toLowerCase();
+      if (!q){ results.innerHTML = '<div class="search-none">Type a keyword to search across the website.</div>'; return; }
+      var terms = q.split(/\s+/);
+      var matches = INDEX.map(function(p){
+        var hay = (p.title + ' ' + p.text + ' ' + p.snippet).toLowerCase();
+        var score = 0;
+        terms.forEach(function(t){ if (hay.indexOf(t) > -1) score++; });
+        return {p:p, score:score};
+      }).filter(function(m){ return m.score > 0; })
+        .sort(function(a,b){ return b.score - a.score; });
+
+      if (!matches.length){ results.innerHTML = '<div class="search-none">No results for &ldquo;' + escapeHtml(q) + '&rdquo;.</div>'; return; }
+      results.innerHTML = matches.map(function(m){
+        var tgt = m.p.target ? ' target="_blank" rel="noopener"' : '';
+        return '<a href="' + m.p.url + '"' + tgt + '><b>' + escapeHtml(m.p.title) + '</b><span>' + escapeHtml(m.p.snippet) + '</span></a>';
+      }).join('');
+    }
+
+    input.addEventListener('input', function(){ render(input.value); });
+    ov.querySelector('.search-close').addEventListener('click', closeSearch);
+    ov.addEventListener('click', function(e){ if (e.target === ov) closeSearch(); });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeSearch(); });
+
+    document.querySelectorAll('.search-btn').forEach(function(b){
+      b.addEventListener('click', function(e){ e.preventDefault(); openSearch(); });
+    });
+  })();
+</script>
+</body>
+</html>
