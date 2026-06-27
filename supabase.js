@@ -112,7 +112,10 @@ const Magnum = {
     return data || [];
   },
   async sendChat(userId, sender, text){
-    return await sb.from('chat_messages').insert({ user_id: userId, sender: sender, text: text });
+    const { data } = await sb.from('chat_messages')
+      .insert({ user_id: userId, sender: sender, text: text })
+      .select().maybeSingle();
+    return data;
   },
 
   // ----- notifications -----

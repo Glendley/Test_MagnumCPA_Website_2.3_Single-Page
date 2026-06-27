@@ -350,8 +350,9 @@
     const text = (inp.value||'').trim();
     if(!text) return;
     inp.value = '';
-    await Magnum.sendChat(activeId, 'team', text);
-    (CHAT[activeId] = CHAT[activeId] || []).push({ sender:'team', text:text, created_at:new Date().toISOString() });
+    var row = await Magnum.sendChat(activeId, 'team', text);
+    var arr = CHAT[activeId] = CHAT[activeId] || [];
+    if (row && !arr.some(function(x){ return x.id === row.id; })) arr.push(row);
     renderConvView();
     renderMessages();
     await notifyClient(activeId, 'You have a new reply from our team.');
@@ -446,6 +447,21 @@
     renderMessages();
     renderFeedback();
     renderNotif();
+
+    // ----- realtime: live client messages + admin notifications -----
+    sb.channel('admin-live')
+      .on('postgres_changes',
+          { event:'INSERT', schema:'public', table:'chat_messages' },
+          function(payload){
+            var m = payload.new; if(!m) return;
+            var arr = CHAT[m.user_id] = CHAT[m.user_id] || [];
+            if (!arr.some(function(x){ return x.id === m.id; })) arr.push(m);
+            renderMessages();
+          })
+      .on('postgres_changes',
+          { event:'INSERT', schema:'public', table:'notifications', filter:'recipient=eq.admin' },
+          async function(){ ANOTIF = await Magnum.getAdminNotifications(); renderNotif(); })
+      .subscribe();
   })();
 </script>
 </body>
