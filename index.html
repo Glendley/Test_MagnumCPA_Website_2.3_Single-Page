@@ -1150,6 +1150,13 @@ function openPortal(mode){
   var title   = document.getElementById('pmTitle');
   var sub     = document.getElementById('pmSub');
   overlay.classList.add('open');
+  // Already signed in? Go straight to the right dashboard.
+  if (_currentUser){
+    tabs.style.display = 'none';
+    if (ADMIN_EMAILS.indexOf(_currentUser.email) > -1) renderAdminDashboard();
+    else renderClientDashboard();
+    return;
+  }
   if (mode === 'admin'){
     tabs.style.display = 'none';
     title.textContent  = 'Admin Login';
@@ -1229,11 +1236,17 @@ async function doLogin(){
   var isAdmin  = ADMIN_EMAILS.indexOf(_currentUser.email) > -1;
   if (_portalMode === 'admin' && !isAdmin){
     await sb.auth.signOut();
+    _currentUser = null;
     pmMsg('This account does not have admin access.','error');
     if(btn) btn.disabled=false; return;
   }
-  if (isAdmin) renderAdminDashboard();
-  else renderClientDashboard();
+  try {
+    if (isAdmin) await renderAdminDashboard();
+    else await renderClientDashboard();
+  } catch(err){
+    pmMsg('Signed in, but the dashboard failed to load: ' + (err && err.message ? err.message : err), 'error');
+    if(btn) btn.disabled=false;
+  }
 }
 
 /* ---------- Auth: Register ---------- */
