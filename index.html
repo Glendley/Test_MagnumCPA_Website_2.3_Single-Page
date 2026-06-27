@@ -6,6 +6,8 @@
 <title>Magnum CPA PC — Max Drew, CPA | Trusted by Ramsey</title>
 <meta name="description" content="Magnum CPA PC — Max Drew, CPA &amp; Financial Coach. Ramsey Trusted for 10+ years. Tax planning, preparation, and financial coaching.">
 <link id="fa-cdn" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   /* ===== Magnum CPA — shared styles ===== */
@@ -902,33 +904,12 @@
     onScroll();
   })();
 
-  /* ===== Client reviews (About) ===== */
-  (function(){
-    var track = document.getElementById('reviewTrack');
-    if (!track) return;
-    var fb;
-    try { fb = JSON.parse(localStorage.getItem('magnum_feedback') || '[]'); } catch(e){ fb = []; }
-    function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-    fb.filter(function(f){ return f.approved; }).forEach(function(f){
-      var stars = '★★★★★'.slice(0, f.rating||5);
-      var div = document.createElement('div');
-      div.className = 'review';
-      div.innerHTML = '<div class="stars">'+stars+'</div><h4>'+esc(f.name||'Client')+'</h4><p>'+esc(f.text||'')+'</p>';
-      track.appendChild(div);
-    });
-  })();
+  /* ===== Client reviews (About) — approved reviews from Supabase ===== */
   var revIndex = 0;
   var revTrack = document.getElementById('reviewTrack');
-  var revSlides = revTrack ? revTrack.children.length : 0;
   var revDotsWrap = document.getElementById('revDots');
-  if (revTrack && revSlides){
-    for (var i=0;i<revSlides;i++){
-      var d = document.createElement('button');
-      d.setAttribute('aria-label','Go to review '+(i+1));
-      (function(idx){ d.addEventListener('click', function(){ revShow(idx); }); })(i);
-      revDotsWrap.appendChild(d);
-    }
-  }
+  var revSlides = 0;
+  var revTimer = null;
   function revShow(i){
     if(!revSlides) return;
     revIndex = (i % revSlides + revSlides) % revSlides;
@@ -937,8 +918,37 @@
     for (var k=0;k<dots.length;k++){ dots[k].classList.toggle('active', k===revIndex); }
   }
   function revMove(d){ revShow(revIndex + d); }
-  revShow(0);
-  if (revSlides > 1){ setInterval(function(){ revMove(1); }, 7000); }
+  function revInit(){
+    if (!revTrack) return;
+    revSlides = revTrack.children.length;
+    revDotsWrap.innerHTML = '';
+    for (var i=0;i<revSlides;i++){
+      var d = document.createElement('button');
+      d.setAttribute('aria-label','Go to review '+(i+1));
+      (function(idx){ d.addEventListener('click', function(){ revShow(idx); }); })(i);
+      revDotsWrap.appendChild(d);
+    }
+    revShow(0);
+    if (revTimer) clearInterval(revTimer);
+    if (revSlides > 1){ revTimer = setInterval(function(){ revMove(1); }, 7000); }
+  }
+  (function(){
+    if (!revTrack){ return; }
+    function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function inject(list){
+      (list||[]).forEach(function(f){
+        var stars = '★★★★★'.slice(0, f.rating||5);
+        var div = document.createElement('div');
+        div.className = 'review';
+        div.innerHTML = '<div class="stars">'+stars+'</div><h4>'+esc(f.name||'Client')+'</h4><p>'+esc(f.text||'')+'</p>';
+        revTrack.appendChild(div);
+      });
+      revInit();
+    }
+    if (window.Magnum && Magnum.getApprovedReviews){
+      Magnum.getApprovedReviews().then(inject).catch(function(){ revInit(); });
+    } else { revInit(); }
+  })();
 
   /* ===== Request a consultation (Acuity) ===== */
   var ACUITY_BASE = 'https://magnumcpa.as.me/schedule/c78873bb/appointment/7960861?appointmentTypeIds%5B%5D=7960861';

@@ -212,68 +212,36 @@
   </div>
 </section>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
 <script src="organizer.js"></script>
 <script>
-  // ----- guard -----
-  if (sessionStorage.getItem('magnum_admin') !== '1'){ window.location.href = 'admin-login.html'; }
+  async function adminLogout(){ await Magnum.signOut(); window.location.href = 'admin-login.html'; }
 
-  function adminLogout(){ sessionStorage.removeItem('magnum_admin'); window.location.href = 'admin-login.html'; }
+  // ----- data (loaded from Supabase) -----
+  let REVIEWS = [];
+  let CHAT = {};    // user_id -> [messages]
+  let ANOTIF = [];  // admin notifications
 
-  // ----- data access -----
-  function getSignups(){ try{return JSON.parse(localStorage.getItem('magnum_signups')||'[]');}catch(e){return [];} }
-  function getFeedback(){ try{return JSON.parse(localStorage.getItem('magnum_feedback')||'[]');}catch(e){return [];} }
-  function profileFor(email){
-    try{ return JSON.parse(localStorage.getItem('magnum_profile_'+(email||'').toLowerCase())||'{}'); }
-    catch(e){ return {}; }
-  }
-  function organizerFor(email){
-    try{ return JSON.parse(localStorage.getItem('magnum_organizer_'+(email||'').toLowerCase())||'{}'); }
-    catch(e){ return {}; }
-  }
-  function orgSummary(email){
-    const data = organizerFor(email);
-    if (!data || !Object.keys(data).length) return '<p class="empty">Organizer not started.</p>';
-    let html = '';
-    ORGANIZER_SECTIONS.forEach(function(sec){
-      const rows = sec.fields.filter(function(f){
-        if (f.type === 'display') return false;
+  async function loadAll(){
+    const { data: profs } = await sb.from('profiles').select('*').neq('role','admin').order('created_at',{ascending:true});
+    const { data: orgs }  = await sb.from('organizer').select('user_id,data');
+    const orgMap = {}; (orgs||[]).forEach(o => orgMap[o.user_id] = o.data || {});
+    CLIENTS = (profs||[]).map(function(p){
+      const data = orgMap[p.id] || {};
+      const docs = [];
+      ORGANIZER_SECTIONS.forEach(function(sec){ sec.fields.forEach(function(f){
         const v = data[f.id];
-        return v && (typeof v === 'string' ? v.trim() !== '' : true);
-      }).map(function(f){
-        const v = data[f.id];
-        if (f.type === 'file' && v && v.name)
-          return '<div class="it"><label>'+esc(f.label)+'</label><span><a href="'+v.data+'" download="'+esc(v.name)+'">📎 '+esc(v.name)+'</a></span></div>';
-        return '<div class="it"><label>'+esc(f.label)+'</label><span>'+esc(v)+'</span></div>';
-      });
-      if (rows.length) html += '<div class="org-sec"><h5>'+esc(sec.title)+'</h5><div class="info-grid">'+rows.join('')+'</div></div>';
+        if (f.type==='file' && v && v.name) docs.push({ name:v.name, path:v.path, category:f.label });
+      });});
+      return { id:p.id, email:p.email, name:p.name||'(no name)', profile:p, docs:docs };
     });
-    return html || '<p class="empty">Organizer not started.</p>';
-  }
-  function docsFor(email){
-    try{ return JSON.parse(localStorage.getItem('magnum_docs_'+(email||'').toLowerCase())||'[]'); }
-    catch(e){ return []; }
-  }
 
-  // merge signups + profiles into one client list keyed by email
-  function getClients(){
-    const map = {};
-    getSignups().forEach(s => {
-      const k = (s.email||'').toLowerCase();
-      map[k] = { email: s.email, name: s.name, signupDate: s.date };
-    });
-    for (let i=0;i<localStorage.length;i++){
-      const key = localStorage.key(i);
-      if (key && key.indexOf('magnum_profile_')===0){
-        const email = key.slice('magnum_profile_'.length);
-        if (!map[email]) map[email] = { email: email, name: '' };
-      }
-    }
-    return Object.keys(map).map(k => {
-      const base = map[k];
-      const p = profileFor(base.email);
-      const docs = docsFor(base.email);
-      return Object.assign(base, { profile: p, docs: docs, name: p.name || base.name || '(no name)' });
-    });
+    const { data: msgs } = await sb.from('chat_messages').select('*').order('created_at',{ascending:true});
+    CHAT = {}; (msgs||[]).forEach(function(m){ (CHAT[m.user_id]=CHAT[m.user_id]||[]).push(m); });
+
+    REVIEWS = await Magnum.getReviews();
+    ANOTIF  = await Magnum.getAdminNotifications();
   }
 
   function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -284,7 +252,7 @@
 
   // ----- render -----
   function renderStats(clients){
-    const fb = getFeedback();
+    const fb = REVIEWS;
     const totalDocs = clients.reduce((a,c)=>a+c.docs.length,0);
     document.getElementById('stClients').textContent = clients.length;
     document.getElementById('stDocs').textContent = totalDocs;
@@ -296,7 +264,7 @@
   function clientRow(c){
     const p = c.profile || {};
     const ava = p.photo ? '<img src="'+p.photo+'" alt="">' : initial(c.name);
-    return '<a class="client-link" href="admin-client.html?email='+encodeURIComponent(c.email)+'">'+
+    return '<a class="client-link" href="admin-client.html?id='+encodeURIComponent(c.id)+'">'+
         '<div class="ava">'+ava+'</div>'+
         '<div class="who"><b>'+esc(c.name)+'</b><span>'+esc(c.email)+'</span></div>'+
         '<span class="chev">›</span>'+
@@ -315,22 +283,12 @@
       (filtered.length > 10 ? '<p class="clients-more">Showing 10 of '+filtered.length+' — search to narrow results.</p>' : '');
   }
 
-  function chatKeyFor(email){ return 'magnum_chat_' + (email||'').toLowerCase(); }
-  function getChat(email){ try{return JSON.parse(localStorage.getItem(chatKeyFor(email))||'[]');}catch(e){return [];} }
-  function getChatThreads(){
-    const emails = [];
-    for (let i=0;i<localStorage.length;i++){
-      const k = localStorage.key(i);
-      if (k && k.indexOf('magnum_chat_')===0) emails.push(k.slice('magnum_chat_'.length));
-    }
-    return emails;
-  }
-  function nameFor(email){
-    const c = CLIENTS.find(c => (c.email||'').toLowerCase() === (email||'').toLowerCase());
-    return c ? c.name : email;
-  }
+  function getChatMsgs(id){ return CHAT[id] || []; }
+  function getChatThreads(){ return Object.keys(CHAT); }
+  function nameFor(id){ const c = CLIENTS.find(c => c.id === id); return c ? c.name : id; }
+  function emailForId(id){ const c = CLIENTS.find(c => c.id === id); return c ? c.email : ''; }
 
-  let activeEmail = null;
+  let activeId = null;
 
   function renderMessages(){
     const threads = getChatThreads();
@@ -342,38 +300,37 @@
       return;
     }
     // newest-active conversations first
-    threads.sort((a,b)=>{
-      const la = getChat(a).slice(-1)[0], lb = getChat(b).slice(-1)[0];
-      return (lb?lb.date:'').localeCompare(la?la.date:'');
+    threads.sort(function(a,b){
+      const la = getChatMsgs(a).slice(-1)[0], lb = getChatMsgs(b).slice(-1)[0];
+      return ((lb?lb.created_at:'')||'').localeCompare((la?la.created_at:'')||'');
     });
-    list.innerHTML = threads.map(email=>{
-      const msgs = getChat(email);
+    list.innerHTML = threads.map(function(id){
+      const msgs = getChatMsgs(id);
       const last = msgs[msgs.length-1];
-      const preview = last ? (last.from==='admin'?'You: ':'') + last.text : 'No messages yet';
-      return '<div class="conv-item'+(email===activeEmail?' active':'')+'" onclick="openConv(\''+esc(email)+'\')">'+
-        '<div class="ava">'+initial(nameFor(email))+'</div>'+
-        '<div class="ci"><b>'+esc(nameFor(email))+'</b><span>'+esc(preview)+'</span></div>'+
+      const preview = last ? (last.sender==='team'?'You: ':'') + last.text : 'No messages yet';
+      return '<div class="conv-item'+(id===activeId?' active':'')+'" onclick="openConv(\''+esc(id)+'\')">'+
+        '<div class="ava">'+initial(nameFor(id))+'</div>'+
+        '<div class="ci"><b>'+esc(nameFor(id))+'</b><span>'+esc(preview)+'</span></div>'+
         '<span class="badge">'+msgs.length+'</span>'+
       '</div>';
     }).join('');
 
-    // keep current selection if still present, else default to first
-    if(!activeEmail || threads.indexOf(activeEmail)===-1){ activeEmail = threads[0]; }
+    if(!activeId || threads.indexOf(activeId)===-1){ activeId = threads[0]; }
     renderConvView();
   }
 
-  function openConv(email){ activeEmail = email; renderMessages(); }
+  function openConv(id){ activeId = id; renderMessages(); }
 
   function renderConvView(){
     const view = document.getElementById('convView');
-    if(!activeEmail){ view.innerHTML = '<div class="cv-empty">Select a conversation to read and reply.</div>'; return; }
-    const msgs = getChat(activeEmail);
+    if(!activeId){ view.innerHTML = '<div class="cv-empty">Select a conversation to read and reply.</div>'; return; }
+    const msgs = getChatMsgs(activeId);
     const bubbles = msgs.length
-      ? msgs.map(m => '<div class="bubble '+(m.from==='admin'?'me':'them')+'">'+esc(m.text)+'<span class="bt">'+esc(m.date)+'</span></div>').join('')
+      ? msgs.map(function(m){ return '<div class="bubble '+(m.sender==='team'?'me':'them')+'">'+esc(m.text)+'<span class="bt">'+esc(m.created_at?new Date(m.created_at).toLocaleString():'')+'</span></div>'; }).join('')
       : '<div class="cv-empty">No messages in this conversation yet.</div>';
     view.innerHTML =
-      '<div class="cv-head"><div class="ava">'+initial(nameFor(activeEmail))+'</div>'+
-        '<div><b>'+esc(nameFor(activeEmail))+'</b><span>'+esc(activeEmail)+'</span></div></div>'+
+      '<div class="cv-head"><div class="ava">'+initial(nameFor(activeId))+'</div>'+
+        '<div><b>'+esc(nameFor(activeId))+'</b><span>'+esc(emailForId(activeId))+'</span></div></div>'+
       '<div class="cv-thread" id="cvThread">'+bubbles+'</div>'+
       '<div class="cv-reply">'+
         '<input type="text" id="cvReply" placeholder="Type your reply..." autocomplete="off" '+
@@ -384,37 +341,34 @@
     if(t){ t.scrollTop = t.scrollHeight; }
   }
 
-  function notifyClient(email, text){
-    const k = 'magnum_notify_' + (email||'').toLowerCase();
-    let a; try{ a = JSON.parse(localStorage.getItem(k)||'[]'); }catch(e){ a=[]; }
-    a.push({ id:'n'+Date.now().toString(36), text:text, date:new Date().toLocaleString(), read:false });
-    localStorage.setItem(k, JSON.stringify(a));
+  async function notifyClient(userId, text){
+    await Magnum.addNotification(userId, 'client', text, 'message');
   }
-  function sendReply(){
-    if(!activeEmail) return;
+  async function sendReply(){
+    if(!activeId) return;
     const inp = document.getElementById('cvReply');
     const text = (inp.value||'').trim();
     if(!text) return;
-    const msgs = getChat(activeEmail);
-    msgs.push({ from:'admin', text:text, date:new Date().toLocaleString() });
-    localStorage.setItem(chatKeyFor(activeEmail), JSON.stringify(msgs));
-    notifyClient(activeEmail, 'You have a new reply from our team.');
+    inp.value = '';
+    await Magnum.sendChat(activeId, 'team', text);
+    (CHAT[activeId] = CHAT[activeId] || []).push({ sender:'team', text:text, created_at:new Date().toISOString() });
+    renderConvView();
     renderMessages();
+    await notifyClient(activeId, 'You have a new reply from our team.');
   }
 
-  function setFeedback(a){ localStorage.setItem('magnum_feedback', JSON.stringify(a)); }
   function renderFeedback(){
-    const fb = getFeedback();
+    const fb = REVIEWS;
     const el = document.getElementById('fbList');
     if(!fb.length){ el.innerHTML = '<p class="empty">No feedback yet.</p>'; return; }
-    el.innerHTML = fb.slice().reverse().map(f=>{
+    el.innerHTML = fb.slice().reverse().map(function(f){
       const ava = f.photo ? '<img src="'+f.photo+'" alt="">' : initial(f.name);
       const idA = "'" + (f.id||'') + "'";
       const action = f.approved
         ? '<button class="btn" style="background:#e2e7ec;color:#243a52;" onclick="featureFb('+idA+',false)">★ Remove from About Us</button>'
         : '<button class="btn green" onclick="featureFb('+idA+',true)">★ Feature on About Us</button>';
       return '<div class="fb-item"><div class="fb-top"><div class="fb-ava">'+ava+'</div>'+
-        '<div><div class="fb-name">'+esc(f.name)+'</div><div class="fb-date">'+esc(f.date)+(f.approved?' · ✓ Featured':'')+'</div></div>'+
+        '<div><div class="fb-name">'+esc(f.name)+'</div><div class="fb-date">'+esc(f.created_at?new Date(f.created_at).toLocaleString():'')+(f.approved?' · ✓ Featured':'')+'</div></div>'+
         '<div class="fb-stars">'+starString(f.rating)+'</div></div>'+
         '<div class="fb-text">'+esc(f.text)+'</div>'+
         '<div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;">'+action+
@@ -422,18 +376,18 @@
       '</div>';
     }).join('');
   }
-  function featureFb(id, on){
+  async function featureFb(id, on){
     if (on && !confirm('Feature this review on the public About Us page?')) return;
-    const fb = getFeedback().map(f => { if((f.id||'')===id) f.approved = on; return f; });
-    setFeedback(fb); renderFeedback();
-    if (on){
-      const r = fb.find(f => (f.id||'')===id);
-      if (r && r.email) notifyClient(r.email, 'Your review is now featured on our About Us page. Thank you!');
-    }
+    await Magnum.setReviewApproved(id, on);
+    const r = REVIEWS.find(f => (f.id||'')===id);
+    if (r){ r.approved = on; }
+    renderFeedback();
+    if (on && r && r.user_id) await notifyClient(r.user_id, 'Your review is now featured on our About Us page. Thank you!');
   }
-  function deleteFb(id){
+  async function deleteFb(id){
     if (!confirm('Delete this review?')) return;
-    setFeedback(getFeedback().filter(f => (f.id||'')!==id));
+    await Magnum.deleteReview(id);
+    REVIEWS = REVIEWS.filter(f => (f.id||'')!==id);
     renderFeedback();
   }
 
@@ -445,40 +399,37 @@
     return h+'</Table></Worksheet>';
   }
   function exportExcel(){
-    const signups = getSignups();
-    const signSheet = sheet('Sign Ups', ['Full Name','Email','Password','Sign-up Date'],
-      signups.map(r=>[r.name,r.email,r.password,r.date]));
     const infoSheet = sheet('Client Info',
       ['Full Name','Email','Phone','Sex','Date of Birth','Occupation','Address','About Me','Files Uploaded'],
       CLIENTS.map(c=>[c.name,c.email,c.profile.phone,c.profile.sex,c.profile.dob,c.profile.job,c.profile.addr,c.profile.bio,c.docs.length]));
     const xml='<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n'+
       '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'+
-      signSheet+infoSheet+'</Workbook>';
+      infoSheet+'</Workbook>';
     const blob=new Blob([xml],{type:'application/vnd.ms-excel'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a');
-    a.href=url; a.download='magnum-signups.xls'; document.body.appendChild(a); a.click(); a.remove();
+    a.href=url; a.download='magnum-clients.xls'; document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
   }
 
   // ----- notifications (admin) -----
-  function getANotif(){ try{return JSON.parse(localStorage.getItem('magnum_admin_notify')||'[]');}catch(e){return [];} }
   function renderNotif(){
-    const a = getANotif();
+    const a = ANOTIF;
     const unread = a.filter(n => !n.read).length;
     document.getElementById('notifDot').style.display = unread ? 'block' : 'none';
     const el = document.getElementById('notifList');
-    el.innerHTML = a.length ? a.slice().reverse().map(n => {
-      const link = n.email ? ' <a href="admin-client.html?email='+encodeURIComponent(n.email)+'">View client →</a>' : '';
+    el.innerHTML = a.length ? a.slice().reverse().map(function(n){
+      const link = n.user_id ? ' <a href="admin-client.html?id='+encodeURIComponent(n.user_id)+'">View client →</a>' : '';
       const feat = n.type === 'feedback' ? ' <a href="#" onclick="document.getElementById(\'notifPanel\').classList.remove(\'open\');document.querySelector(\'#fbList\').scrollIntoView({behavior:\'smooth\'});return false;">Review feedback →</a>' : '';
-      return '<div class="ni'+(n.read?'':' unread')+'">'+esc(n.text)+feat+link+'<span class="nd">'+esc(n.date)+'</span></div>';
+      return '<div class="ni'+(n.read?'':' unread')+'">'+esc(n.text)+feat+link+'<span class="nd">'+esc(n.created_at?new Date(n.created_at).toLocaleString():'')+'</span></div>';
     }).join('') : '<div class="notif-empty">No notifications.</div>';
   }
-  function toggleNotif(){
+  async function toggleNotif(){
     const p = document.getElementById('notifPanel');
     if (p.classList.toggle('open')){
-      const a = getANotif().map(n => (n.read=true, n));
-      localStorage.setItem('magnum_admin_notify', JSON.stringify(a));
+      const unreadIds = ANOTIF.filter(n => !n.read).map(n => n.id);
+      ANOTIF.forEach(n => n.read = true);
       renderNotif();
+      if (unreadIds.length) await Magnum.markRead(unreadIds);
     }
   }
   document.addEventListener('click', function(e){
@@ -486,21 +437,16 @@
     if (w && !w.contains(e.target)) document.getElementById('notifPanel').classList.remove('open');
   });
 
-  // live-update when a client changes something in another tab
-  window.addEventListener('storage', function(e){
-    if (!e.key) return;
-    if (e.key === 'magnum_admin_notify') renderNotif();
-    if (e.key === 'magnum_feedback') renderFeedback();
-    if (e.key.indexOf('magnum_chat_') === 0) renderMessages();
-  });
-
-  // init
-  CLIENTS = getClients();
-  renderStats(CLIENTS);
-  renderClients();
-  renderMessages();
-  renderFeedback();
-  renderNotif();
+  // ----- init -----
+  (async function init(){
+    await Magnum.requireAdmin();
+    await loadAll();
+    renderStats(CLIENTS);
+    renderClients();
+    renderMessages();
+    renderFeedback();
+    renderNotif();
+  })();
 </script>
 </body>
 </html>

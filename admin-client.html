@@ -68,7 +68,7 @@
     <a href="admin.html"><img src="images/MAGNUM%20CPA%20LOGO.png" alt="Magnum CPA PC"></a>
     <div class="r">
       <a href="admin.html" class="btn ghost">← All Clients</a>
-      <button class="btn ghost" onclick="sessionStorage.removeItem('magnum_admin');location.href='admin-login.html';">Log Out</button>
+      <button class="btn ghost" onclick="Magnum.signOut().then(function(){location.href='admin-login.html';});">Log Out</button>
     </div>
   </div>
 </header>
@@ -145,19 +145,18 @@
   </section>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
 <script src="organizer.js"></script>
 <script>
-  if (sessionStorage.getItem('magnum_admin') !== '1'){ location.href = 'admin-login.html'; }
-  const email = (new URLSearchParams(location.search).get('email') || '').toLowerCase();
-  const lc = email;
+  const clientId = new URLSearchParams(location.search).get('id') || '';
   function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-  function gj(k,d){ try{return JSON.parse(localStorage.getItem(k)||d);}catch(e){return JSON.parse(d);} }
-  function uid(){ return 'x'+Math.random().toString(36).slice(2)+Date.now().toString(36); }
-  function notifyClient(text){
-    const k='magnum_notify_'+lc; const a=gj(k,'[]');
-    a.push({id:uid(),text:text,date:new Date().toLocaleString(),read:false});
-    localStorage.setItem(k,JSON.stringify(a));
-  }
+
+  let profile = {};
+  let orgData = {};
+  let cname = 'Client';
+
+  async function notifyClient(text){ await Magnum.addNotification(clientId, 'client', text, 'update'); }
 
   function showPane(p){
     document.querySelectorAll('.pane').forEach(s=>s.classList.remove('active'));
@@ -165,34 +164,32 @@
     document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.p===p));
   }
 
-  // ----- data -----
-  const signup = gj('magnum_signups','[]').find(s=>(s.email||'').toLowerCase()===lc) || {};
-  const profile = gj('magnum_profile_'+lc,'{}');
-  const cname = profile.name || signup.name || email || 'Client';
-  document.getElementById('cName').textContent = cname;
-  document.getElementById('cEmail').textContent = email;
-  document.title = cname + ' — Magnum CPA Admin';
-
-  // details
-  (function(){
+  function renderDetails(){
     const p=profile;
-    const rows=[['Email',email],['Phone',p.phone],['Sex',p.sex],['Date of Birth',p.dob],['Occupation',p.job],['Address',p.addr],['Sign-up Date',signup.date],['About',p.bio]];
+    const rows=[['Email',p.email],['Phone',p.phone],['Sex',p.sex],['Date of Birth',p.dob],['Occupation',p.job],['Address',p.addr],['Sign-up Date',p.created_at?new Date(p.created_at).toLocaleString():''],['About',p.bio]];
     document.getElementById('detailsGrid').innerHTML = rows.map(r=>'<div class="it"><label>'+r[0]+'</label><span>'+(r[1]?esc(r[1]):'—')+'</span></div>').join('');
-  })();
+  }
 
-  // documents
-  (function(){
-    const docs=gj('magnum_docs_'+lc,'[]');
+  // documents — files the client attached in the organizer (Supabase Storage)
+  async function renderDocs(){
+    const files=[];
+    ORGANIZER_SECTIONS.forEach(function(sec){ sec.fields.forEach(function(f){
+      const v=orgData[f.id];
+      if(f.type==='file' && v && v.name && v.path) files.push({name:v.name,path:v.path,category:f.label});
+    });});
     const el=document.getElementById('docList');
-    el.innerHTML = docs.length ? docs.map(d=>'<div class="doc-row"><div class="m"><b>'+esc(d.name)+'</b><span>'+esc(d.category||'')+' · '+esc(d.date||'')+'</span></div><a href="'+d.data+'" download="'+esc(d.name)+'">Download</a></div>').join('') : '<p class="empty">No documents uploaded.</p>';
-  })();
+    if(!files.length){ el.innerHTML='<p class="empty">No documents uploaded.</p>'; return; }
+    const rows=await Promise.all(files.map(async function(d){
+      const url=await Magnum.fileUrl(d.path);
+      return '<div class="doc-row"><div class="m"><b>'+esc(d.name)+'</b><span>'+esc(d.category||'')+'</span></div><a href="'+url+'" target="_blank" rel="noopener">Download</a></div>';
+    }));
+    el.innerHTML=rows.join('');
+  }
 
   // ----- organizer (editable) -----
-  const orgKey='magnum_organizer_'+lc;
-  let orgData=gj(orgKey,'{}');
   function renderOrg(){
     document.getElementById('orgTitle').textContent = ORGANIZER_TITLE + ' — ' + cname;
-    const defaults = organizerDefaults(profile, email);
+    const defaults = organizerDefaults(profile, profile.email||'');
     document.getElementById('orgSections').innerHTML = ORGANIZER_SECTIONS.map(function(sec){
       const fields=sec.fields.map(function(f){
         let v=orgData[f.id];
@@ -201,71 +198,84 @@
         if(f.type==='display') return '<div class="ofield"><label>'+esc(f.label)+'</label><div class="ostatic">'+esc(f.value)+'</div></div>';
         if(f.type==='yesno') return '<div class="ofield"><label>'+esc(f.label)+'</label><select id="o_'+f.id+'">'+['','Yes','No'].map(o=>'<option'+(v===o?' selected':'')+'>'+o+'</option>').join('')+'</select></div>';
         if(f.type==='textarea') return '<div class="ofield"><label>'+esc(f.label)+'</label><textarea id="o_'+f.id+'" rows="2">'+esc(v||'')+'</textarea></div>';
-        if(f.type==='file'){ const cur=(v&&v.name)?'<a href="'+v.data+'" download="'+esc(v.name)+'" class="ofile">📎 '+esc(v.name)+'</a>':'<span class="ofile" style="color:var(--muted)">No file</span>'; return '<div class="ofield"><label>'+esc(f.label)+'</label>'+cur+'</div>'; }
+        if(f.type==='file'){ const cur=(v&&v.name)?'<span class="ofile">📎 '+esc(v.name)+'</span>':'<span class="ofile" style="color:var(--muted)">No file</span>'; return '<div class="ofield"><label>'+esc(f.label)+'</label>'+cur+'</div>'; }
         const t=(f.type==='date'?'date':(f.type==='number'?'number':'text'));
         return '<div class="ofield"><label>'+esc(f.label)+'</label><input type="'+t+'" id="o_'+f.id+'" value="'+esc(v||'')+'"></div>';
       }).join('');
       return '<div class="osec"><button type="button" class="osec-head" onclick="this.parentNode.classList.toggle(\'open\')"><span>'+esc(sec.title)+'</span><span class="chev">▸</span></button><div class="osec-body">'+fields+'</div></div>';
     }).join('');
   }
-  function saveOrg(e){
+  async function saveOrg(e){
     e.preventDefault();
     ORGANIZER_SECTIONS.forEach(sec=>sec.fields.forEach(function(f){
       if(f.type==='display'||f.type==='file') return;
       const el=document.getElementById('o_'+f.id); if(el) orgData[f.id]=el.value;
     }));
-    localStorage.setItem(orgKey,JSON.stringify(orgData));
-    notifyClient('Our team updated your tax organizer.');
+    const { error } = await Magnum.saveOrganizer(clientId, orgData);
+    if (error){ alert('Could not save: '+error.message); return false; }
+    await notifyClient('Our team updated your tax organizer.');
     const n=document.getElementById('orgSaved'); n.classList.add('show'); setTimeout(()=>n.classList.remove('show'),2000);
     return false;
   }
 
   // ----- account updates -----
-  const updKey='magnum_updates_'+lc, asanaKey='magnum_asana_'+lc;
   function renderAsana(){
-    const url=localStorage.getItem(asanaKey)||'';
+    const url=profile.asana_url||'';
     document.getElementById('asanaUrl').value=url;
     const open=document.getElementById('asanaOpen');
     if(url){ open.href=url; open.style.display='inline-block'; } else { open.style.display='none'; }
   }
-  function saveAsana(){
+  async function saveAsana(){
     const url=document.getElementById('asanaUrl').value.trim();
-    localStorage.setItem(asanaKey,url); renderAsana();
+    await Magnum.saveProfile(clientId, { asana_url: url });
+    profile.asana_url = url; renderAsana();
   }
-  function renderUpdates(){
-    const a=gj(updKey,'[]');
+  async function renderUpdates(){
+    const a=await Magnum.getUpdates(clientId);
     const el=document.getElementById('updList');
-    el.innerHTML = a.length ? a.slice().reverse().map(u=>'<div class="feed-item"><button class="del" onclick="delUpdate(\''+u.id+'\')">Delete</button><div class="d">'+esc(u.date)+'</div><div class="t">'+esc(u.text)+'</div>'+(u.task?'<div class="a"><a href="'+esc(u.task)+'" target="_blank" rel="noopener">Open Asana task ↗</a></div>':'')+'</div>').join('') : '<p class="empty">No updates posted yet.</p>';
+    el.innerHTML = a.length ? a.slice().reverse().map(u=>'<div class="feed-item"><button class="del" onclick="delUpdate(\''+u.id+'\')">Delete</button><div class="d">'+esc(u.created_at?new Date(u.created_at).toLocaleString():'')+'</div><div class="t">'+esc(u.text)+'</div>'+(u.task?'<div class="a"><a href="'+esc(u.task)+'" target="_blank" rel="noopener">Open Asana task ↗</a></div>':'')+'</div>').join('') : '<p class="empty">No updates posted yet.</p>';
   }
-  function addUpdate(e){
+  async function addUpdate(e){
     e.preventDefault();
-    const a=gj(updKey,'[]');
-    a.push({id:uid(),text:document.getElementById('updText').value.trim(),task:document.getElementById('updTask').value.trim(),date:new Date().toLocaleString()});
-    localStorage.setItem(updKey,JSON.stringify(a));
-    notifyClient('New account update: '+document.getElementById('updText').value.trim().slice(0,60));
+    const text=document.getElementById('updText').value.trim();
+    await Magnum.addUpdate(clientId, text, document.getElementById('updTask').value.trim());
+    await notifyClient('New account update: '+text.slice(0,60));
     e.target.reset(); renderUpdates(); return false;
   }
-  function delUpdate(id){ let a=gj(updKey,'[]').filter(u=>u.id!==id); localStorage.setItem(updKey,JSON.stringify(a)); renderUpdates(); }
+  async function delUpdate(id){ await Magnum.deleteUpdate(id); renderUpdates(); }
 
   // ----- meeting notes -----
-  const mtKey='magnum_meetings_'+lc;
-  function renderMeetings(){
-    const a=gj(mtKey,'[]');
+  async function renderMeetings(){
+    const a=await Magnum.getMeetings(clientId);
     const el=document.getElementById('mtList');
-    el.innerHTML = a.length ? a.slice().reverse().map(m=>'<div class="feed-item"><button class="del" onclick="delMeeting(\''+m.id+'\')">Delete</button><div class="d">'+esc(m.date)+'</div><b style="color:var(--navy)">'+esc(m.title)+'</b><div class="t" style="white-space:pre-wrap;margin-top:4px;">'+esc(m.notes)+'</div>'+(m.drive?'<div class="a"><a href="'+esc(m.drive)+'" target="_blank" rel="noopener">📁 Open Google Drive folder ↗</a></div>':'')+'</div>').join('') : '<p class="empty">No meeting notes yet.</p>';
+    el.innerHTML = a.length ? a.slice().reverse().map(m=>'<div class="feed-item"><button class="del" onclick="delMeeting(\''+m.id+'\')">Delete</button><div class="d">'+esc(m.created_at?new Date(m.created_at).toLocaleString():'')+'</div><b style="color:var(--navy)">'+esc(m.title)+'</b><div class="t" style="white-space:pre-wrap;margin-top:4px;">'+esc(m.notes)+'</div>'+(m.drive?'<div class="a"><a href="'+esc(m.drive)+'" target="_blank" rel="noopener">📁 Open Google Drive folder ↗</a></div>':'')+'</div>').join('') : '<p class="empty">No meeting notes yet.</p>';
   }
-  function addMeeting(e){
+  async function addMeeting(e){
     e.preventDefault();
-    const a=gj(mtKey,'[]');
-    a.push({id:uid(),title:document.getElementById('mtTitle').value.trim(),notes:document.getElementById('mtNotes').value.trim(),drive:document.getElementById('mtDrive').value.trim(),date:new Date().toLocaleString()});
-    localStorage.setItem(mtKey,JSON.stringify(a));
-    notifyClient('New meeting notes added: '+document.getElementById('mtTitle').value.trim().slice(0,60));
+    const title=document.getElementById('mtTitle').value.trim();
+    await Magnum.addMeeting(clientId, title, document.getElementById('mtNotes').value.trim(), document.getElementById('mtDrive').value.trim());
+    await notifyClient('New meeting notes added: '+title.slice(0,60));
     e.target.reset(); renderMeetings(); return false;
   }
-  function delMeeting(id){ let a=gj(mtKey,'[]').filter(m=>m.id!==id); localStorage.setItem(mtKey,JSON.stringify(a)); renderMeetings(); }
+  async function delMeeting(id){ await Magnum.deleteMeeting(id); renderMeetings(); }
 
-  // init
-  renderOrg(); renderAsana(); renderUpdates(); renderMeetings();
+  // ----- init -----
+  (async function init(){
+    await Magnum.requireAdmin();
+    if (!clientId){ alert('No client specified.'); location.href='admin.html'; return; }
+    profile = await Magnum.getProfile(clientId);
+    orgData = await Magnum.getOrganizer(clientId);
+    cname = profile.name || profile.email || 'Client';
+    document.getElementById('cName').textContent = cname;
+    document.getElementById('cEmail').textContent = profile.email || '';
+    document.title = cname + ' — Magnum CPA Admin';
+    renderDetails();
+    renderDocs();
+    renderOrg();
+    renderAsana();
+    renderUpdates();
+    renderMeetings();
+  })();
 </script>
 </body>
 </html>
