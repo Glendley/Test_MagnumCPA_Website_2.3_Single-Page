@@ -50,7 +50,7 @@ git commit -m "Update site — %TIMESTAMP%"
 :: Push to GitHub
 echo.
 echo Pushing to GitHub...
-git push -u origin main
+git push -u origin main --force
 
 if %errorlevel% equ 0 (
     echo.
