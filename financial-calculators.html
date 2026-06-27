@@ -52,8 +52,9 @@
   .submenu a{display:block;text-align:left;border-radius:5px;}
 
   /* page banner */
-  .page-hero{position:relative;background:#0d1f4a;color:#fff;
+  .page-hero{position:relative;background:url('images/hero-bg.jpg') right 28%/cover no-repeat;color:#fff;
     text-align:center;padding:74px 20px;overflow:hidden;}
+  .page-hero::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,22,58,.55),rgba(8,22,58,.78));}
   .page-hero h1{position:relative;z-index:2;font-family:Georgia,'Times New Roman',serif;font-size:3rem;font-weight:700;letter-spacing:.5px;}
   .page-hero p{position:relative;z-index:2;color:#dbe4f5;margin-top:8px;}
 
