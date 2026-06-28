@@ -21,7 +21,12 @@
       "Bash(find /c/Users/Glenn/Documents /c/Users/Glenn/Downloads /c/Users/Glenn/Desktop -maxdepth 3 -type f \\\\\\( -iname \"*signature*\" -o -iname \"*sig*.png\" -o -iname \"*sig*.jpg\" \\\\\\) 2>/dev/null | head -40)",
       "Bash(python -c \"from PIL import Image; im=Image.open\\(r'C:/Users/Glenn/Downloads/Max Email Signature \\(9\\).png'\\); print\\('size:', im.size\\)\")",
       "Bash(python3 -c \"from PIL import Image; im=Image.open\\(r'C:/Users/Glenn/Downloads/Max Email Signature \\(9\\).png'\\); print\\('size:', im.size\\)\")",
-      "Bash(pip show *)"
+      "Bash(pip show *)",
+      "mcp__Claude_in_Chrome__navigate",
+      "Bash(ls -lt \"/c/Users/Glenn/Downloads/\" 2>/dev/null | head -8)",
+      "Bash(find \"/c/Users/Glenn/Downloads\" /c/Users/Glenn/Desktop \"/c/Users/Glenn/Documents/Claude/single page magnum\" -type f -newermt \"2026-06-27 18:24\" 2>/dev/null | head -20)",
+      "Bash(mv \"Untitled design.png\" \"ramsey-trusted.png\")",
+      "Read(//c/c/Users/Glenn/Documents/Claude/single page magnum/images/**)"
     ]
   }
 }

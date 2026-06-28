@@ -79,11 +79,9 @@
     background:linear-gradient(90deg,rgba(8,22,58,.94) 0%,rgba(8,22,58,.7) 34%,rgba(8,22,58,.25) 54%,rgba(8,22,58,0) 70%);}
   .hero-wrap{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:48px;min-height:560px;padding:60px 0;}
   .hero-info{max-width:540px;}
-  .hero-media{display:flex;flex-direction:column;gap:10px;flex:0 0 320px;max-width:340px;}
-  .hero-media img{width:100%;max-height:170px;object-fit:contain;
-    mix-blend-mode:multiply;filter:brightness(1.5) contrast(1.05);
-    -webkit-mask-image:radial-gradient(ellipse 68% 68% at 50% 50%,#000 40%,transparent 80%);
-            mask-image:radial-gradient(ellipse 68% 68% at 50% 50%,#000 40%,transparent 80%);}
+  .hero-media{display:flex;flex-direction:column;gap:18px;flex:0 0 320px;max-width:340px;}
+  /* transparent logos rendered as clean white marks on the navy hero */
+  .hero-media img{width:100%;max-height:120px;object-fit:contain;filter:brightness(0) invert(1);opacity:.92;}
   .hero-info .kicker{display:inline-flex;align-items:center;gap:9px;background:rgba(255,255,255,.12);
     border:1px solid rgba(255,255,255,.25);border-radius:30px;padding:7px 16px;font-size:.78rem;
     font-weight:700;letter-spacing:.5px;margin-bottom:20px;}
@@ -499,9 +497,7 @@
   <div class="container">
     <div class="hero-wrap">
       <div class="hero-media">
-        <img src="images/BBB.jpg" alt="A+ BBB Accredited">
-        <img src="images/Google_2.png" alt="Google Reviews">
-        <img src="images/Ramsey.jpg" alt="Ramsey Trusted">
+        <img src="images/ramsey-trusted.png" alt="Ramsey Trusted">
       </div>
       <div class="hero-info">
         <span class="kicker"><span class="r">R</span> Ramsey Trusted · 10+ Years</span>
