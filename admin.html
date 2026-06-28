@@ -38,6 +38,16 @@
 
   .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:26px 0 14px;flex-wrap:wrap;}
   .bar h2{color:var(--navy);font-size:1.3rem;}
+  .settings-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:0 6px 18px rgba(36,58,82,.05);}
+  .settings-card .gr-toggle{display:flex;gap:10px;align-items:flex-start;cursor:pointer;margin-bottom:16px;color:#3c4757;font-size:.95rem;}
+  .settings-card .gr-toggle input{width:18px;height:18px;margin-top:3px;flex:none;cursor:pointer;}
+  .settings-card .gr-fld{margin-bottom:16px;}
+  .settings-card .gr-fld label{display:block;font-size:.82rem;font-weight:700;color:var(--navy);margin-bottom:6px;}
+  .settings-card .gr-fld input{width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:8px;font-size:.92rem;font-family:inherit;}
+  .settings-card .gr-fld input:focus{outline:2px solid var(--gold);border-color:transparent;}
+  .settings-card .gr-hint{font-size:.78rem;color:var(--muted);margin-top:6px;}
+  .settings-card .saved{color:var(--green);font-weight:700;font-size:.85rem;opacity:0;transition:opacity .3s;}
+  .settings-card .saved.show{opacity:1;}
   .search{padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:.95rem;min-width:240px;}
 
   .client{background:#fff;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:0 6px 18px rgba(36,58,82,.05);}
@@ -236,6 +246,23 @@
       <div class="doc-list" id="docPaneList"></div>
       <div class="doc-view" id="docView">
         <div class="cv-empty">Select a document on the left to preview it here.</div>
+      </div>
+    </div>
+
+    <div class="bar"><h2>Google Review Invite</h2></div>
+    <div class="settings-card">
+      <label class="gr-toggle">
+        <input type="checkbox" id="grEnabled">
+        <span>After a client leaves feedback in the portal, invite them to post a Google review.</span>
+      </label>
+      <div class="gr-fld">
+        <label for="grUrl">Google review link</label>
+        <input type="url" id="grUrl" placeholder="https://g.page/r/...  or  https://search.google.com/local/writereview?placeid=...">
+        <p class="gr-hint">Paste your Google Business “write a review” link. Find it in your Google Business Profile → Ask for reviews → Share review form.</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <button class="btn" onclick="saveReviewSettings()">Save</button>
+        <span class="saved" id="grSaved">✓ Saved</span>
       </div>
     </div>
 
@@ -445,6 +472,21 @@
       '<div class="dv-body">'+body+'</div>';
   }
 
+  // ----- Google review invite settings -----
+  async function loadReviewSettings(){
+    const s = await Magnum.getSettings();
+    document.getElementById('grEnabled').checked = s.google_review_enabled === '1';
+    document.getElementById('grUrl').value = s.google_review_url || '';
+  }
+  async function saveReviewSettings(){
+    const enabled = document.getElementById('grEnabled').checked ? '1' : '0';
+    const url = document.getElementById('grUrl').value.trim();
+    const r1 = await Magnum.setSetting('google_review_enabled', enabled);
+    const r2 = await Magnum.setSetting('google_review_url', url);
+    if ((r1 && r1.error) || (r2 && r2.error)){ alert('Could not save: '+((r1&&r1.error&&r1.error.message)||(r2&&r2.error&&r2.error.message))); return; }
+    const n = document.getElementById('grSaved'); n.classList.add('show'); setTimeout(function(){ n.classList.remove('show'); }, 2000);
+  }
+
   function renderFeedback(){
     const fb = REVIEWS;
     const el = document.getElementById('fbList');
@@ -536,6 +578,7 @@
     renderMessages();
     renderFeedback();
     renderNotif();
+    loadReviewSettings();
 
     // ----- realtime: live client messages + admin notifications -----
     sb.channel('admin-live')

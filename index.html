@@ -77,8 +77,10 @@
     background:#0d1f4a url('images/hero-bg.jpg') no-repeat;background-size:cover;background-position:right 28%;}
   .hero::before{content:"";position:absolute;inset:0;pointer-events:none;
     background:linear-gradient(90deg,rgba(8,22,58,.94) 0%,rgba(8,22,58,.7) 34%,rgba(8,22,58,.25) 54%,rgba(8,22,58,0) 70%);}
-  .hero-wrap{position:relative;z-index:2;display:flex;align-items:center;min-height:560px;padding:60px 0;}
+  .hero-wrap{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:48px;min-height:560px;padding:60px 0;}
   .hero-info{max-width:540px;}
+  .hero-media{display:flex;flex-direction:column;gap:18px;flex:0 0 300px;max-width:320px;}
+  .hero-media img{width:100%;max-height:150px;object-fit:contain;background:#fff;padding:14px;border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.45);}
   .hero-info .kicker{display:inline-flex;align-items:center;gap:9px;background:rgba(255,255,255,.12);
     border:1px solid rgba(255,255,255,.25);border-radius:30px;padding:7px 16px;font-size:.78rem;
     font-weight:700;letter-spacing:.5px;margin-bottom:20px;}
@@ -323,8 +325,10 @@
     .submenu{position:static;display:none;box-shadow:none;background:#0f2236;padding:0;min-width:0;}
     .has-sub.open .submenu{display:flex;}
     .submenu a{padding-left:40px;}
-    .hero-wrap{min-height:440px;padding:48px 0;}
+    .hero-wrap{min-height:440px;padding:48px 0;flex-direction:column;align-items:flex-start;gap:28px;}
     .hero-info{max-width:100%;}
+    .hero-media{flex:none;width:100%;max-width:100%;flex-direction:row;}
+    .hero-media img{flex:1;max-height:80px;padding:8px;}
     .hero-info h1{font-size:2.1rem;}
     .hero::before{background:linear-gradient(180deg,rgba(8,22,58,.9) 0%,rgba(8,22,58,.78) 55%,rgba(8,22,58,.55) 100%);}
     .page-hero h1{font-size:2.1rem;}
@@ -498,6 +502,11 @@
         <div class="hero-cta">
           <a href="#request" class="btn">Schedule Your Free Consultation</a>
         </div>
+      </div>
+      <div class="hero-media">
+        <img src="images/BBB.jpg" alt="A+ BBB Accredited">
+        <img src="images/Google_2.png" alt="Google Reviews">
+        <img src="images/Ramsey.jpg" alt="Ramsey Trusted">
       </div>
     </div>
   </div>

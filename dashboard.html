@@ -511,6 +511,8 @@
   // ----- feedback / reviews -----
   let myReviewRow = null;
   let reviewList = [];
+  let appSettings = {};
+  function googleReviewOn(){ return appSettings.google_review_enabled === '1' && !!(appSettings.google_review_url||'').trim(); }
   function starString(n){ return '★★★★★'.slice(0,n) + '☆☆☆☆☆'.slice(0,5-n); }
   function escapeHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function fbDate(f){ return f.created_at ? new Date(f.created_at).toLocaleString() : ''; }
@@ -518,7 +520,14 @@
   async function loadFeedback(){
     reviewList = await Magnum.getReviews();   // RLS returns approved reviews + the client's own
     myReviewRow = user ? (reviewList.find(f => f.user_id === user.id) || null) : null;
+    appSettings = await Magnum.getSettings();
     renderFeedback();
+  }
+  function googleReviewBtn(){
+    if (!googleReviewOn()) return '';
+    return '<a class="btn" href="'+escapeHtml(appSettings.google_review_url)+'" target="_blank" rel="noopener" '+
+      'style="display:inline-flex;align-items:center;gap:8px;margin-top:14px;text-decoration:none;">'+
+      '<span style="font-size:1.1rem;">⭐</span> Leave us a Google review</a>';
   }
   function renderFeedback(){
     const mineEl = document.getElementById('myFb');
@@ -526,7 +535,8 @@
       mineEl.innerHTML = '<div class="fb-mine"><div class="fb-stars" style="color:var(--gold)">'+starString(myReviewRow.rating)+'</div>'+
         '<div style="margin:4px 0;color:#3c4757;">'+escapeHtml(myReviewRow.text)+'</div>'+
         '<div style="font-size:.75rem;color:var(--muted);">'+escapeHtml(fbDate(myReviewRow))+(myReviewRow.approved?' · ✓ Featured on About Us':' · pending review')+'</div>'+
-        '<div class="acts"><button class="edit" onclick="editFeedback()">Edit</button><button class="del" onclick="deleteFeedback()">Delete</button></div></div>';
+        '<div class="acts"><button class="edit" onclick="editFeedback()">Edit</button><button class="del" onclick="deleteFeedback()">Delete</button></div>'+
+        googleReviewBtn()+'</div>';
     } else { mineEl.innerHTML = ''; }
 
     const el = document.getElementById('fbList');
@@ -566,7 +576,13 @@
     pushAdminNotify('New ' + rating + '★ review from ' + name + ' — review to feature on About Us.', 'feedback');
     document.getElementById('fbText').value = ''; rating = 0; paint(0);
     await loadFeedback();
-    alert('Thank you! Your review was submitted. Our team will review featuring it on our website.');
+    if (googleReviewOn()){
+      if (confirm('Thank you! Your review was submitted.\n\nWould you also share your experience on Google? It really helps our practice.')){
+        window.open(appSettings.google_review_url, '_blank', 'noopener');
+      }
+    } else {
+      alert('Thank you! Your review was submitted. Our team will review featuring it on our website.');
+    }
     return false;
   }
 

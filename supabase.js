@@ -162,6 +162,19 @@ const Magnum = {
     return await sb.from('notifications').update({ read: true }).in('id', ids);
   },
 
+  // ----- app settings (admin-controlled key/value) -----
+  async getSettings(){
+    const { data } = await sb.from('app_settings').select('key,value');
+    const out = {};
+    (data || []).forEach(function(r){ out[r.key] = r.value; });
+    return out;
+  },
+  async setSetting(key, value){
+    return await sb.from('app_settings')
+      .upsert({ key: key, value: value, updated_at: new Date().toISOString() },
+              { onConflict: 'key' });
+  },
+
   // ----- reviews -----
   async getReviews(){
     const { data } = await sb.from('reviews').select('*').order('created_at', { ascending: true });
