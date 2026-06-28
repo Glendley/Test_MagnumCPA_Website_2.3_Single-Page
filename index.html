@@ -1150,10 +1150,23 @@ function openPortal(mode){
   var title   = document.getElementById('pmTitle');
   var sub     = document.getElementById('pmSub');
   overlay.classList.add('open');
-  // Already signed in? Go straight to the right full dashboard page.
+  // Already signed in? Go straight to the right full dashboard page —
+  // but only when the existing session matches the portal being opened.
   if (_currentUser){
-    window.location.href = (ADMIN_EMAILS.indexOf(_currentUser.email) > -1) ? 'admin.html' : 'dashboard.html';
-    return;
+    var userIsAdmin = ADMIN_EMAILS.indexOf(_currentUser.email) > -1;
+    if (mode === 'admin' && userIsAdmin){
+      window.location.href = 'admin.html';
+      return;
+    }
+    if (mode !== 'admin' && !userIsAdmin){
+      window.location.href = 'dashboard.html';
+      return;
+    }
+    // Mismatch (e.g. a client clicking Admin Login): drop the stale session
+    // so the correct credentials can be entered.
+    var _sbSO = getSB();
+    if (_sbSO) { try { _sbSO.auth.signOut(); } catch(e){} }
+    _currentUser = null;
   }
   if (mode === 'admin'){
     tabs.style.display = 'none';
