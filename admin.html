@@ -136,7 +136,31 @@
   .cv-reply button{width:44px;height:44px;border-radius:50%;border:0;background:var(--gold);color:var(--navy-dark);font-size:1.05rem;cursor:pointer;flex:none;}
   .cv-empty{margin:auto;color:var(--muted);font-style:italic;text-align:center;padding:30px;}
 
+  /* documents pane */
+  .docbox{display:grid;grid-template-columns:340px 1fr;background:#fff;border:1px solid var(--border);
+    border-radius:var(--radius);overflow:hidden;box-shadow:0 6px 18px rgba(36,58,82,.05);min-height:480px;}
+  .doc-list{border-right:1px solid var(--border);background:#fafbfc;max-height:620px;overflow-y:auto;}
+  .doc-item{display:flex;gap:12px;align-items:center;padding:13px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:.15s;}
+  .doc-item:hover{background:#f1f4f7;}
+  .doc-item.active{background:#fff;box-shadow:inset 3px 0 0 var(--gold);}
+  .doc-item .fic{width:38px;height:38px;border-radius:8px;background:var(--navy);color:var(--gold);display:grid;place-items:center;font-size:1.1rem;flex:none;}
+  .doc-item .m{flex:1;min-width:0;}
+  .doc-item .m b{color:var(--navy);font-size:.9rem;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .doc-item .m span{font-size:.78rem;color:var(--muted);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .doc-view{display:flex;flex-direction:column;min-width:0;}
+  .dv-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;justify-content:space-between;}
+  .dv-head .t{min-width:0;}
+  .dv-head .t b{color:var(--navy);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .dv-head .t span{font-size:.82rem;color:var(--muted);}
+  .dv-head a{background:var(--gold);color:var(--navy-dark);font-weight:700;padding:8px 14px;border-radius:6px;font-size:.82rem;flex:none;}
+  .dv-body{flex:1;background:#f3f5f8;min-height:360px;display:flex;}
+  .dv-body iframe{width:100%;height:100%;border:0;min-height:420px;}
+  .dv-body img{max-width:100%;max-height:560px;margin:auto;display:block;object-fit:contain;}
+  .dv-body .dv-fallback{margin:auto;text-align:center;color:var(--muted);padding:40px;}
+
   @media (max-width:680px){
+    .docbox{grid-template-columns:1fr;}
+    .doc-list{max-height:240px;}
     .stats{grid-template-columns:repeat(2,1fr);}
     .info-grid{grid-template-columns:1fr;}
     .chatbox{grid-template-columns:1fr;}
@@ -204,6 +228,14 @@
             <div class="cv-empty">Select a conversation on the left to read and reply.</div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div class="bar"><h2>Uploaded Documents</h2><input class="search" id="docSearch" type="text" placeholder="Search file, client or category..." oninput="renderDocuments()" style="max-width:320px;"></div>
+    <div class="docbox">
+      <div class="doc-list" id="docPaneList"></div>
+      <div class="doc-view" id="docView">
+        <div class="cv-empty">Select a document on the left to preview it here.</div>
       </div>
     </div>
 
@@ -358,6 +390,61 @@
     await notifyClient(activeId, 'You have a new reply from our team.');
   }
 
+  // ----- documents (all clients) -----
+  let DOCS = [];          // flat list of every uploaded document
+  let activeDocKey = null;
+  function buildDocs(){
+    DOCS = [];
+    CLIENTS.forEach(function(c){
+      (c.docs||[]).forEach(function(d){
+        DOCS.push({ key:c.id+'|'+d.path, name:d.name, path:d.path, category:d.category||'',
+                    clientName:c.name, clientEmail:c.email });
+      });
+    });
+  }
+  function renderDocuments(){
+    const q = (document.getElementById('docSearch').value||'').toLowerCase();
+    const filtered = DOCS.filter(function(d){
+      return (d.name+' '+d.category+' '+d.clientName+' '+d.clientEmail).toLowerCase().includes(q);
+    });
+    const el = document.getElementById('docPaneList');
+    if(!filtered.length){
+      el.innerHTML = '<p class="empty" style="padding:18px;">No documents found.</p>';
+      document.getElementById('docView').innerHTML = '<div class="cv-empty">No documents to preview.</div>';
+      return;
+    }
+    el.innerHTML = filtered.map(function(d){
+      return '<div class="doc-item'+(d.key===activeDocKey?' active':'')+'" onclick="openDoc(\''+esc(d.key).replace(/'/g,"\\'")+'\')">'+
+        '<div class="fic">'+fileIcon('',d.name)+'</div>'+
+        '<div class="m"><b>'+esc(d.name)+'</b><span>'+esc(d.clientName)+' • '+esc(d.category||'Document')+'</span></div>'+
+      '</div>';
+    }).join('');
+    if(activeDocKey && !filtered.some(function(d){return d.key===activeDocKey;})) activeDocKey = null;
+  }
+  async function openDoc(key){
+    activeDocKey = key;
+    renderDocuments();
+    const d = DOCS.find(function(x){ return x.key===key; });
+    const view = document.getElementById('docView');
+    if(!d){ view.innerHTML = '<div class="cv-empty">Document not found.</div>'; return; }
+    view.innerHTML =
+      '<div class="dv-head"><div class="t"><b>'+esc(d.name)+'</b><span>'+esc(d.clientName)+' • '+esc(d.category||'Document')+'</span></div></div>'+
+      '<div class="dv-body"><div class="dv-fallback">Loading preview…</div></div>';
+    const url = await Magnum.fileUrl(d.path);
+    if(activeDocKey !== key) return; // user moved on while loading
+    const lower = (d.name||'').toLowerCase();
+    const isImg = /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(lower);
+    const isPdf = lower.endsWith('.pdf');
+    const body = isImg ? '<img src="'+url+'" alt="'+esc(d.name)+'">'
+               : isPdf ? '<iframe src="'+url+'#toolbar=1" title="'+esc(d.name)+'"></iframe>'
+               : '<div class="dv-fallback">Preview not available for this file type.<br><br>'+
+                 '<a class="btn" href="'+url+'" target="_blank" rel="noopener" style="display:inline-block;">⬇ Download to view</a></div>';
+    document.getElementById('docView').innerHTML =
+      '<div class="dv-head"><div class="t"><b>'+esc(d.name)+'</b><span>'+esc(d.clientName)+' • '+esc(d.category||'Document')+'</span></div>'+
+        '<a href="'+url+'" target="_blank" rel="noopener">⬇ Download</a></div>'+
+      '<div class="dv-body">'+body+'</div>';
+  }
+
   function renderFeedback(){
     const fb = REVIEWS;
     const el = document.getElementById('fbList');
@@ -444,6 +531,8 @@
     await loadAll();
     renderStats(CLIENTS);
     renderClients();
+    buildDocs();
+    renderDocuments();
     renderMessages();
     renderFeedback();
     renderNotif();
