@@ -84,6 +84,30 @@ const Magnum = {
     return data ? data.signedUrl : '#';
   },
 
+  // ----- shared files (two-way admin <-> client exchange) -----
+  // Stored under  <client_id>/shared/<unique>-<filename>
+  async getSharedFiles(userId){
+    const { data } = await sb.from('shared_files').select('*')
+      .eq('user_id', userId).order('created_at', { ascending: true });
+    return data || [];
+  },
+  async uploadSharedFile(userId, file, by){
+    const safe = (file.name || 'file').replace(/[^\w.\-]+/g, '_');
+    const uid  = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (''+Math.round(performance.now())+Math.round(performance.now()*7));
+    const path = userId + '/shared/' + uid + '-' + safe;
+    const up = await sb.storage.from('documents').upload(path, file, { upsert: true });
+    if (up.error) throw up.error;
+    const { data, error } = await sb.from('shared_files')
+      .insert({ user_id: userId, name: file.name, path: path, size: file.size, uploaded_by: by })
+      .select().maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+  async deleteSharedFile(id, path){
+    if (path) await sb.storage.from('documents').remove([path]);
+    return await sb.from('shared_files').delete().eq('id', id);
+  },
+
   // ----- updates / meetings -----
   async getUpdates(userId){
     const { data } = await sb.from('updates').select('*')

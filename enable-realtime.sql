@@ -12,4 +12,8 @@ begin
     alter publication supabase_realtime add table public.notifications;
   exception when others then null;  -- already added
   end;
+  begin
+    alter publication supabase_realtime add table public.shared_files;
+  exception when others then null;  -- already added
+  end;
 end $$;

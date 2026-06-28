@@ -153,6 +153,16 @@
       <h3 style="margin-top:22px;">Posted Updates</h3>
       <div id="updList"></div>
     </div>
+
+    <div class="card">
+      <h3>Shared Files</h3>
+      <p style="color:var(--muted);font-size:.9rem;margin-bottom:14px;">Upload any file to share with this client (returns, statements, forms…). The client can download it and upload files back here.</p>
+      <label class="btn" style="display:inline-block;cursor:pointer;">⬆ Upload File for Client
+        <input type="file" id="sharedInput" style="display:none;" onchange="uploadShared(event)">
+      </label>
+      <span id="sharedStatus" style="margin-left:12px;font-size:.85rem;color:var(--muted);"></span>
+      <div id="sharedList" style="margin-top:16px;"></div>
+    </div>
   </section>
 
   <section class="pane" id="pane-meetings">
@@ -313,6 +323,43 @@
   }
   async function delMeeting(id){ await Magnum.deleteMeeting(id); renderMeetings(); }
 
+  // ----- shared files (two-way exchange) -----
+  async function renderShared(){
+    const files = await Magnum.getSharedFiles(clientId);
+    const el = document.getElementById('sharedList');
+    if (!files.length){ el.innerHTML = '<p class="empty">No shared files yet.</p>'; return; }
+    const rows = await Promise.all(files.slice().reverse().map(async function(f){
+      const url = await Magnum.fileUrl(f.path);
+      const who = f.uploaded_by === 'client' ? '⬆ Uploaded by client' : '✔ Shared by you';
+      const when = f.created_at ? new Date(f.created_at).toLocaleString() : '';
+      return '<div class="doc-row"><div class="fic">'+fileIcon(f.name)+'</div>'+
+        '<div class="m"><b>'+esc(f.name)+'</b><span>'+who+' • '+esc(when)+'</span></div>'+
+        '<a href="'+url+'" target="_blank" rel="noopener">Download</a>'+
+        '<button class="del" style="background:0;border:0;color:#c0392b;cursor:pointer;font-weight:700;font-size:.82rem;margin-left:10px;" onclick="delShared(\''+f.id+'\',\''+esc(f.path).replace(/'/g,"\\'")+'\')">Delete</button>'+
+      '</div>';
+    }));
+    el.innerHTML = rows.join('');
+  }
+  async function uploadShared(e){
+    const file = e.target.files[0];
+    if (!file) return;
+    const st = document.getElementById('sharedStatus');
+    st.textContent = 'Uploading…';
+    try {
+      await Magnum.uploadSharedFile(clientId, file, 'admin');
+      await notifyClient('Our team shared a new file with you: '+file.name);
+      st.textContent = '✓ Uploaded';
+      setTimeout(function(){ st.textContent=''; }, 2500);
+    } catch(err){ st.textContent=''; alert('Upload failed: '+(err.message||err)); }
+    e.target.value = '';
+    renderShared();
+  }
+  async function delShared(id, path){
+    if (!confirm('Delete this file? This cannot be undone.')) return;
+    await Magnum.deleteSharedFile(id, path);
+    renderShared();
+  }
+
   // ----- init -----
   (async function init(){
     await Magnum.requireAdmin();
@@ -328,7 +375,15 @@
     renderOrg();
     renderAsana();
     renderUpdates();
+    renderShared();
     renderMeetings();
+
+    // live-refresh shared files when the client uploads
+    sb.channel('admin-client-'+clientId)
+      .on('postgres_changes',
+          { event:'*', schema:'public', table:'shared_files', filter:'user_id=eq.'+clientId },
+          function(){ renderShared(); })
+      .subscribe();
   })();
 </script>
 </body>

@@ -88,6 +88,16 @@ create table if not exists public.reviews (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.shared_files (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references auth.users(id) on delete cascade,  -- the client the file belongs to
+  name        text,
+  path        text,
+  size        bigint,
+  uploaded_by text not null check (uploaded_by in ('admin','client')),
+  created_at  timestamptz not null default now()
+);
+
 -- ---------- helper: is the current user an admin? -------------------
 -- Defined AFTER profiles so the column reference validates.
 -- SECURITY DEFINER so it can read profiles without tripping RLS recursion.
@@ -132,6 +142,7 @@ alter table public.meetings      enable row level security;
 alter table public.chat_messages enable row level security;
 alter table public.notifications enable row level security;
 alter table public.reviews       enable row level security;
+alter table public.shared_files  enable row level security;
 
 -- ---------- policies ------------------------------------------------
 -- profiles: a user sees/edits their own row; admins see/edit all.
@@ -216,6 +227,20 @@ drop policy if exists reviews_delete on public.reviews;
 create policy reviews_delete on public.reviews for delete
   using (user_id = auth.uid() or public.is_admin());
 
+-- shared_files: client sees/manages own; admin sees/manages all.
+drop policy if exists shared_files_select on public.shared_files;
+create policy shared_files_select on public.shared_files for select
+  using (user_id = auth.uid() or public.is_admin());
+drop policy if exists shared_files_insert on public.shared_files;
+create policy shared_files_insert on public.shared_files for insert
+  with check (
+    (user_id = auth.uid() and uploaded_by = 'client')
+    or (public.is_admin() and uploaded_by = 'admin')
+  );
+drop policy if exists shared_files_delete on public.shared_files;
+create policy shared_files_delete on public.shared_files for delete
+  using (user_id = auth.uid() or public.is_admin());
+
 -- ---------- storage bucket for uploaded documents -------------------
 insert into storage.buckets (id, name, public)
 values ('documents', 'documents', false)
@@ -227,7 +252,7 @@ drop policy if exists docs_insert on storage.objects;
 create policy docs_insert on storage.objects for insert
   with check (
     bucket_id = 'documents'
-    and (storage.foldername(name))[1] = auth.uid()::text
+    and ((storage.foldername(name))[1] = auth.uid()::text or public.is_admin())
   );
 drop policy if exists docs_select on storage.objects;
 create policy docs_select on storage.objects for select

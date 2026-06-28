@@ -358,6 +358,14 @@
       <div class="card-body">
         <p style="color:var(--muted);margin-bottom:16px;">Updates posted by our team about your account and tax work.</p>
         <div id="updatesList"></div>
+
+        <h3 style="margin:28px 0 10px;color:var(--navy);font-size:1.05rem;">📎 Shared Files</h3>
+        <p style="color:var(--muted);margin-bottom:14px;font-size:.92rem;">Files shared by our team appear here for you to download. You can also upload files back to us — drafts, statements, signed forms, anything we ask for.</p>
+        <label class="upload-btn">⬆ Upload a File
+          <input type="file" id="sharedInput" onchange="uploadShared(event)">
+        </label>
+        <span id="sharedStatus" style="margin-left:12px;font-size:.85rem;color:var(--muted);"></span>
+        <div id="sharedList" style="margin-top:16px;"></div>
       </div>
     </div>
   </div>
@@ -689,6 +697,45 @@
     ).join('') : '<p class="empty">No meeting notes yet.</p>';
   }
 
+  // ----- shared files (two-way exchange) -----
+  function fileIcon(n){ n=(n||'').toLowerCase(); if(/\.(png|jpe?g|gif|webp|bmp|svg)$/.test(n))return '🖼️'; if(n.endsWith('.pdf'))return '📕'; if(n.endsWith('.doc')||n.endsWith('.docx'))return '📘'; if(n.endsWith('.xls')||n.endsWith('.xlsx'))return '📗'; return '📄'; }
+  async function renderShared(){
+    const files = await Magnum.getSharedFiles(user.id);
+    const el = document.getElementById('sharedList');
+    if (!files.length){ el.innerHTML = '<p class="empty">No shared files yet.</p>'; return; }
+    const rows = await Promise.all(files.slice().reverse().map(async function(f){
+      const url = await Magnum.fileUrl(f.path);
+      const who = f.uploaded_by === 'admin' ? '✔ Shared by our team' : '⬆ Uploaded by you';
+      const when = f.created_at ? new Date(f.created_at).toLocaleString() : '';
+      const delBtn = f.uploaded_by === 'client'
+        ? '<button class="del" onclick="delShared(\''+f.id+'\',\''+escapeHtml(f.path).replace(/'/g,"\\'")+'\')">Delete</button>' : '';
+      return '<div class="doc-row"><div class="fic">'+fileIcon(f.name)+'</div>'+
+        '<div class="meta"><b>'+escapeHtml(f.name)+'</b><span>'+who+' • '+escapeHtml(when)+'</span></div>'+
+        '<a class="dl" href="'+url+'" target="_blank" rel="noopener">Download</a>'+delBtn+
+      '</div>';
+    }));
+    el.innerHTML = rows.join('');
+  }
+  async function uploadShared(e){
+    const file = e.target.files[0];
+    if (!file) return;
+    const st = document.getElementById('sharedStatus');
+    st.textContent = 'Uploading…';
+    try {
+      await Magnum.uploadSharedFile(user.id, file, 'client');
+      pushAdminNotify(clientDisplayName() + ' uploaded a file: ' + file.name, 'file');
+      st.textContent = '✓ Uploaded';
+      setTimeout(function(){ st.textContent=''; }, 2500);
+    } catch(err){ st.textContent=''; alert('Upload failed: '+(err.message||err)); }
+    e.target.value = '';
+    renderShared();
+  }
+  async function delShared(id, path){
+    if (!confirm('Delete this file?')) return;
+    await Magnum.deleteSharedFile(id, path);
+    renderShared();
+  }
+
   // ----- notifications -----
   let notifRows = [];
   async function renderNotif(){
@@ -728,6 +775,7 @@
     await loadFeedback();
     renderUpdates();
     renderMeetings();
+    renderShared();
     renderNotif();
 
     // ----- realtime: live chat + notifications -----
@@ -738,6 +786,9 @@
       .on('postgres_changes',
           { event:'INSERT', schema:'public', table:'notifications', filter:'user_id=eq.'+user.id },
           function(){ renderNotif(); })
+      .on('postgres_changes',
+          { event:'*', schema:'public', table:'shared_files', filter:'user_id=eq.'+user.id },
+          function(){ renderShared(); })
       .subscribe();
   })();
 </script>
