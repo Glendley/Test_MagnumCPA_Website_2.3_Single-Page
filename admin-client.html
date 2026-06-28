@@ -38,6 +38,26 @@
   .doc-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;}
   .doc-row .m{flex:1;min-width:0;}.doc-row .m b{display:block;color:var(--navy);font-size:.92rem;}
   .doc-row .m span{font-size:.76rem;color:var(--muted);}.doc-row a{color:var(--blue);font-weight:700;font-size:.82rem;}
+  .docbox{display:grid;grid-template-columns:320px 1fr;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;min-height:460px;}
+  .doc-list{border-right:1px solid var(--border);background:#fafbfc;max-height:600px;overflow-y:auto;}
+  .doc-item{display:flex;gap:12px;align-items:center;padding:13px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:.15s;}
+  .doc-item:hover{background:#f1f4f7;}
+  .doc-item.active{background:#fff;box-shadow:inset 3px 0 0 var(--gold);}
+  .doc-item .fic{width:38px;height:38px;border-radius:8px;background:var(--navy);color:var(--gold);display:grid;place-items:center;font-size:1.1rem;flex:none;}
+  .doc-item .m{flex:1;min-width:0;}
+  .doc-item .m b{color:var(--navy);font-size:.9rem;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .doc-item .m span{font-size:.78rem;color:var(--muted);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .doc-view{display:flex;flex-direction:column;min-width:0;}
+  .dv-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;justify-content:space-between;}
+  .dv-head .t{min-width:0;}
+  .dv-head .t b{color:var(--navy);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .dv-head .t span{font-size:.82rem;color:var(--muted);}
+  .dv-head a{background:var(--gold);color:var(--navy-dark);font-weight:700;padding:8px 14px;border-radius:6px;font-size:.82rem;flex:none;}
+  .dv-body{flex:1;background:#f3f5f8;min-height:360px;display:flex;}
+  .dv-body iframe{width:100%;height:100%;border:0;min-height:420px;}
+  .dv-body img{max-width:100%;max-height:560px;margin:auto;display:block;object-fit:contain;}
+  .dv-empty,.dv-fallback{margin:auto;text-align:center;color:var(--muted);font-style:italic;padding:40px;}
+  @media(max-width:680px){.docbox{grid-template-columns:1fr;}.doc-list{max-height:240px;}}
 
   /* organizer accordion */
   .osec{border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;}
@@ -96,7 +116,12 @@
   </section>
 
   <section class="pane" id="pane-documents">
-    <div class="card"><h3>Uploaded Documents</h3><div id="docList"></div></div>
+    <div class="card"><h3>Uploaded Documents</h3>
+      <div class="docbox">
+        <div class="doc-list" id="docList"></div>
+        <div class="doc-view" id="docView"><div class="dv-empty">Select a document on the left to preview it here.</div></div>
+      </div>
+    </div>
   </section>
 
   <section class="pane" id="pane-organizer">
@@ -171,19 +196,48 @@
   }
 
   // documents — files the client attached in the organizer (Supabase Storage)
-  async function renderDocs(){
-    const files=[];
+  let DOCS=[]; let activeDocKey=null;
+  function fileIcon(n){ n=(n||'').toLowerCase(); if(/\.(png|jpe?g|gif|webp|bmp|svg)$/.test(n))return '🖼️'; if(n.endsWith('.pdf'))return '📕'; if(n.endsWith('.doc')||n.endsWith('.docx'))return '📘'; if(n.endsWith('.xls')||n.endsWith('.xlsx'))return '📗'; return '📄'; }
+  function renderDocs(){
+    DOCS=[];
     ORGANIZER_SECTIONS.forEach(function(sec){ sec.fields.forEach(function(f){
       const v=orgData[f.id];
-      if(f.type==='file' && v && v.name && v.path) files.push({name:v.name,path:v.path,category:f.label});
+      if(f.type==='file' && v && v.name && v.path) DOCS.push({key:v.path,name:v.name,path:v.path,category:f.label});
     });});
     const el=document.getElementById('docList');
-    if(!files.length){ el.innerHTML='<p class="empty">No documents uploaded.</p>'; return; }
-    const rows=await Promise.all(files.map(async function(d){
-      const url=await Magnum.fileUrl(d.path);
-      return '<div class="doc-row"><div class="m"><b>'+esc(d.name)+'</b><span>'+esc(d.category||'')+'</span></div><a href="'+url+'" target="_blank" rel="noopener">Download</a></div>';
-    }));
-    el.innerHTML=rows.join('');
+    if(!DOCS.length){
+      el.innerHTML='<p class="empty" style="padding:18px;">No documents uploaded.</p>';
+      document.getElementById('docView').innerHTML='<div class="dv-empty">No documents to preview.</div>';
+      return;
+    }
+    el.innerHTML=DOCS.map(function(d){
+      return '<div class="doc-item'+(d.key===activeDocKey?' active':'')+'" onclick="openDoc(\''+esc(d.key).replace(/'/g,"\\'")+'\')">'+
+        '<div class="fic">'+fileIcon(d.name)+'</div>'+
+        '<div class="m"><b>'+esc(d.name)+'</b><span>'+esc(d.category||'Document')+'</span></div>'+
+      '</div>';
+    }).join('');
+  }
+  async function openDoc(key){
+    activeDocKey=key; renderDocs();
+    const d=DOCS.find(function(x){return x.key===key;});
+    const view=document.getElementById('docView');
+    if(!d){ view.innerHTML='<div class="dv-empty">Document not found.</div>'; return; }
+    view.innerHTML=
+      '<div class="dv-head"><div class="t"><b>'+esc(d.name)+'</b><span>'+esc(d.category||'Document')+'</span></div></div>'+
+      '<div class="dv-body"><div class="dv-fallback">Loading preview…</div></div>';
+    const url=await Magnum.fileUrl(d.path);
+    if(activeDocKey!==key) return;
+    const lower=(d.name||'').toLowerCase();
+    const isImg=/\.(png|jpe?g|gif|webp|bmp|svg)$/.test(lower);
+    const isPdf=lower.endsWith('.pdf');
+    const body=isImg ? '<img src="'+url+'" alt="'+esc(d.name)+'">'
+             : isPdf ? '<iframe src="'+url+'#toolbar=1" title="'+esc(d.name)+'"></iframe>'
+             : '<div class="dv-fallback">Preview not available for this file type.<br><br>'+
+               '<a class="btn" href="'+url+'" target="_blank" rel="noopener" style="display:inline-block;">⬇ Download to view</a></div>';
+    document.getElementById('docView').innerHTML=
+      '<div class="dv-head"><div class="t"><b>'+esc(d.name)+'</b><span>'+esc(d.category||'Document')+'</span></div>'+
+        '<a href="'+url+'" target="_blank" rel="noopener">⬇ Download</a></div>'+
+      '<div class="dv-body">'+body+'</div>';
   }
 
   // ----- organizer (editable) -----
