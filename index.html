@@ -80,9 +80,10 @@
   .hero-wrap{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:48px;min-height:560px;padding:60px 0;}
   .hero-info{max-width:540px;}
   .hero-media{display:flex;flex-direction:column;gap:10px;flex:0 0 320px;max-width:340px;}
-  .hero-media img{width:100%;max-height:170px;object-fit:contain;mix-blend-mode:lighten;
-    -webkit-mask-image:radial-gradient(ellipse 70% 70% at 50% 50%,#000 45%,transparent 82%);
-            mask-image:radial-gradient(ellipse 70% 70% at 50% 50%,#000 45%,transparent 82%);}
+  .hero-media img{width:100%;max-height:170px;object-fit:contain;
+    mix-blend-mode:multiply;filter:brightness(1.5) contrast(1.05);
+    -webkit-mask-image:radial-gradient(ellipse 68% 68% at 50% 50%,#000 40%,transparent 80%);
+            mask-image:radial-gradient(ellipse 68% 68% at 50% 50%,#000 40%,transparent 80%);}
   .hero-info .kicker{display:inline-flex;align-items:center;gap:9px;background:rgba(255,255,255,.12);
     border:1px solid rgba(255,255,255,.25);border-radius:30px;padding:7px 16px;font-size:.78rem;
     font-weight:700;letter-spacing:.5px;margin-bottom:20px;}
