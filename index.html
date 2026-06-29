@@ -87,9 +87,15 @@
   .hero-info h1{font-family:Georgia,'Times New Roman',serif;font-size:3rem;line-height:1.08;
     font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:18px;text-shadow:0 2px 22px rgba(0,0,0,.45);}
   .hero-info h1 .accent{color:#9ec3ff;}
-  /* interactive plaque-of-achievement area (content added later) */
-  .plaque-area{max-width:1000px;margin:0 auto;min-height:160px;display:flex;align-items:center;justify-content:center;
-    background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.18);border-radius:14px;padding:28px;}
+  /* interactive plaque-of-achievement cards */
+  .plaque-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1000px;margin:0 auto;}
+  .plaque-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:14px;overflow:hidden;
+    margin:0;cursor:pointer;transition:transform .25s,box-shadow .25s,border-color .25s;}
+  .plaque-card img{width:100%;height:230px;object-fit:contain;display:block;background:#0c1b3a;padding:14px;transition:transform .3s;}
+  .plaque-card figcaption{padding:13px 14px;text-align:center;color:#e9eef3;font-weight:600;font-size:.95rem;letter-spacing:.2px;}
+  .plaque-card:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(0,0,0,.45);border-color:var(--gold);}
+  .plaque-card:hover img{transform:scale(1.05);}
+  @media(max-width:760px){.plaque-grid{grid-template-columns:1fr;}}
   .hero-info p.lede{color:#dbe4f5;max-width:480px;font-size:1.05rem;margin-bottom:28px;text-shadow:0 1px 10px rgba(0,0,0,.35);}
   .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;}
 
@@ -507,9 +513,19 @@
 <!-- ===== Achievements / Plaque (interactive) ===== -->
 <section id="achievements" class="section" style="padding:50px 0;">
   <div class="container">
-    <div class="section-head"><h2>OUR ACHIEVEMENTS</h2></div>
-    <div id="plaqueArea" class="plaque-area">
-      <p style="text-align:center;color:#c7d2e2;margin:0;">Interactive plaque of achievement — coming soon.</p>
+    <div id="plaqueArea" class="plaque-grid">
+      <figure class="plaque-card">
+        <img src="images/BBB.jpg" alt="A+ BBB Accredited">
+        <figcaption>A+ BBB Accredited</figcaption>
+      </figure>
+      <figure class="plaque-card">
+        <img src="images/Google_2.png" alt="Best of 2026 — Business Rate">
+        <figcaption>Best of 2026 · Business Rate</figcaption>
+      </figure>
+      <figure class="plaque-card">
+        <img src="images/Ramsey.jpg" alt="Ramsey Trusted">
+        <figcaption>Ramsey Trusted · 10+ Years</figcaption>
+      </figure>
     </div>
   </div>
 </section>
