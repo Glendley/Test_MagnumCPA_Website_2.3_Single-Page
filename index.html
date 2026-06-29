@@ -72,12 +72,12 @@
   .submenu a{display:block;text-align:left;border-radius:5px;}
 
   /* ---------- Hero (home) ---------- */
-  .hero{position:relative;overflow:hidden;color:#fff;aspect-ratio:2754/1536;max-height:82vh;
+  .hero{position:relative;overflow:hidden;color:#fff;min-height:100vh;
     background:#0d1f4a url('images/hero-bg-2.jpg') no-repeat;background-size:cover;background-position:right center;}
   .hero .container{height:100%;}
   .hero::before{content:"";position:absolute;inset:0;pointer-events:none;
     background:linear-gradient(90deg,rgba(8,22,58,.94) 0%,rgba(8,22,58,.7) 34%,rgba(8,22,58,.25) 54%,rgba(8,22,58,0) 70%);}
-  .hero-wrap{position:relative;z-index:2;display:flex;align-items:flex-end;min-height:100%;padding:60px 0 56px;}
+  .hero-wrap{position:relative;z-index:2;display:flex;align-items:flex-end;min-height:100vh;padding:60px 0 56px;}
   .hero-info{max-width:540px;}
   .hero-info .kicker{display:inline-flex;align-items:center;gap:9px;background:rgba(255,255,255,.12);
     border:1px solid rgba(255,255,255,.25);border-radius:30px;padding:7px 16px;font-size:.78rem;
