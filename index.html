@@ -73,11 +73,11 @@
 
   /* ---------- Hero (home) ---------- */
   .hero{position:relative;overflow:hidden;color:#fff;
-    background:#0d1f4a url('images/hero-bg-2.jpg') no-repeat;background-size:cover;background-position:center;}
+    background:#0d1f4a url('images/hero-bg-2.jpg') no-repeat;background-size:cover;background-position:right 28%;}
   .hero::before{content:"";position:absolute;inset:0;pointer-events:none;
-    background:radial-gradient(ellipse 70% 80% at 50% 50%,rgba(8,22,58,.82) 0%,rgba(8,22,58,.6) 55%,rgba(8,22,58,.42) 100%);}
-  .hero-wrap{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;text-align:center;min-height:560px;padding:60px 0;}
-  .hero-info{max-width:760px;margin:0 auto;}
+    background:linear-gradient(90deg,rgba(8,22,58,.94) 0%,rgba(8,22,58,.7) 34%,rgba(8,22,58,.25) 54%,rgba(8,22,58,0) 70%);}
+  .hero-wrap{position:relative;z-index:2;display:flex;align-items:center;min-height:560px;padding:60px 0;}
+  .hero-info{max-width:540px;}
   .hero-info .kicker{display:inline-flex;align-items:center;gap:9px;background:rgba(255,255,255,.12);
     border:1px solid rgba(255,255,255,.25);border-radius:30px;padding:7px 16px;font-size:.78rem;
     font-weight:700;letter-spacing:.5px;margin-bottom:20px;}
@@ -86,8 +86,8 @@
   .hero-info h1{font-family:Georgia,'Times New Roman',serif;font-size:3rem;line-height:1.08;
     font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:18px;text-shadow:0 2px 22px rgba(0,0,0,.45);}
   .hero-info h1 .accent{color:#9ec3ff;}
-  .hero-info p.lede{color:#dbe4f5;max-width:560px;font-size:1.05rem;margin:0 auto 28px;text-shadow:0 1px 10px rgba(0,0,0,.35);}
-  .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;justify-content:center;}
+  .hero-info p.lede{color:#dbe4f5;max-width:480px;font-size:1.05rem;margin-bottom:28px;text-shadow:0 1px 10px rgba(0,0,0,.35);}
+  .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;}
 
   /* ---------- Home video section ---------- */
   .home-section .section-head h2{color:#fff;}
