@@ -1128,7 +1128,9 @@ var ADMIN_EMAILS    = ['ask@magnumcpa.com'];     // add admin emails here
 var _sb = null;
 function getSB(){
   if (!_sb && window.supabase && SUPABASE_URL !== 'YOUR_SUPABASE_URL'){
-    _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+      auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, storageKey:'magnum-auth' }
+    });
   }
   return _sb;
 }

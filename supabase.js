@@ -9,7 +9,14 @@
 const SUPABASE_URL = 'https://nnvqdmdrhruqlhellnyw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5udnFkbWRyaHJ1cWxoZWxsbnl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NTc2MDksImV4cCI6MjA5ODEzMzYwOX0.4FTAyDAeDwPKYvQuCq0JaATC70IkMRvMgvbBN8-q8UE';
 
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,       // keep the session in localStorage across reloads
+    autoRefreshToken: true,     // silently refresh the token so users don't get logged out
+    detectSessionInUrl: true,
+    storageKey: 'magnum-auth'   // shared key so every page uses the same session
+  }
+});
 window.sb = sb;
 
 const Magnum = {

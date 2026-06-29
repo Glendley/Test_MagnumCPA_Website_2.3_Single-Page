@@ -30,14 +30,10 @@ drop policy if exists shared_files_select on public.shared_files;
 create policy shared_files_select on public.shared_files for select
   using (user_id = auth.uid() or public.is_admin());
 
--- client may add files to their own record (tagged 'client');
--- admin may add files to any client's record (tagged 'admin').
+-- client may add files to their own record; admin may add to any client's.
 drop policy if exists shared_files_insert on public.shared_files;
 create policy shared_files_insert on public.shared_files for insert
-  with check (
-    (user_id = auth.uid() and uploaded_by = 'client')
-    or (public.is_admin() and uploaded_by = 'admin')
-  );
+  with check (user_id = auth.uid() or public.is_admin());
 
 -- either side may remove a file on the record.
 drop policy if exists shared_files_delete on public.shared_files;
