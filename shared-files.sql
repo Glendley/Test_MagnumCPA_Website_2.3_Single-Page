@@ -56,3 +56,6 @@ create policy docs_insert on storage.objects for insert
   );
 
 -- (docs_select / docs_update / docs_delete already allow admins.)
+
+-- ---------- tell PostgREST to pick up the new table right away --------
+notify pgrst, 'reload schema';
