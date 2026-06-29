@@ -73,7 +73,7 @@
 
   /* ---------- Hero (home) ---------- */
   .hero{position:relative;overflow:hidden;color:#fff;
-    background:#0d1f4a url('images/hero-bg-2.jpg') no-repeat;background-size:cover;background-position:center;}
+    background:#0d1f4a url('images/hero-bg-2.jpg') no-repeat;background-size:cover;background-position:center 78%;}
   .hero .container{height:100%;}
   .hero::before{content:"";position:absolute;inset:0;pointer-events:none;
     background:linear-gradient(90deg,rgba(8,22,58,.94) 0%,rgba(8,22,58,.7) 34%,rgba(8,22,58,.25) 54%,rgba(8,22,58,0) 70%);}
@@ -87,6 +87,9 @@
   .hero-info h1{font-family:Georgia,'Times New Roman',serif;font-size:3rem;line-height:1.08;
     font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:18px;text-shadow:0 2px 22px rgba(0,0,0,.45);}
   .hero-info h1 .accent{color:#9ec3ff;}
+  /* interactive plaque-of-achievement area (content added later) */
+  .plaque-area{max-width:1000px;margin:0 auto;min-height:160px;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.18);border-radius:14px;padding:28px;}
   .hero-info p.lede{color:#dbe4f5;max-width:480px;font-size:1.05rem;margin-bottom:28px;text-shadow:0 1px 10px rgba(0,0,0,.35);}
   .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;}
 
@@ -492,11 +495,22 @@
     <div class="hero-wrap">
       <div class="hero-info">
         <span class="kicker"><span class="r">R</span> Ramsey Trusted · 10+ Years</span>
+        <h1>California's Premier Partner for <span class="accent">Strategic Growth &amp; Tax Advantage</span></h1>
         <p class="lede">Proactive accounting, expert tax planning, and financial coaching for businesses and professionals — led by Max Drew, CPA.</p>
         <div class="hero-cta">
           <a href="#request" class="btn">Schedule Your Free Consultation</a>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Achievements / Plaque (interactive) ===== -->
+<section id="achievements" class="section" style="padding:50px 0;">
+  <div class="container">
+    <div class="section-head"><h2>OUR ACHIEVEMENTS</h2></div>
+    <div id="plaqueArea" class="plaque-area">
+      <p style="text-align:center;color:#c7d2e2;margin:0;">Interactive plaque of achievement — coming soon.</p>
     </div>
   </div>
 </section>
