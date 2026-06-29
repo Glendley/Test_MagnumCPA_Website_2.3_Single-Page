@@ -98,17 +98,26 @@ const Magnum = {
       .eq('user_id', userId).order('created_at', { ascending: true });
     return data || [];
   },
-  async uploadSharedFile(userId, file, by){
+  async uploadSharedFile(userId, file, by, note){
     const safe = (file.name || 'file').replace(/[^\w.\-]+/g, '_');
     const uid  = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (''+Math.round(performance.now())+Math.round(performance.now()*7));
     const path = userId + '/shared/' + uid + '-' + safe;
     const up = await sb.storage.from('documents').upload(path, file, { upsert: true });
     if (up.error) throw up.error;
     const { data, error } = await sb.from('shared_files')
-      .insert({ user_id: userId, name: file.name, path: path, size: file.size, uploaded_by: by })
+      .insert({ user_id: userId, name: file.name, path: path, size: file.size, uploaded_by: by, note: note || null })
       .select().maybeSingle();
     if (error) throw error;
     return data;
+  },
+  // Ask the Edge Function to email the client that a file was shared.
+  // Safe no-op if the function isn't deployed yet.
+  async emailClientFileShared(clientId, fileName, note){
+    try {
+      await sb.functions.invoke('notify-client', {
+        body: { user_id: clientId, file_name: fileName, note: note || '' }
+      });
+    } catch(e){ /* email is best-effort; the in-app notification still fires */ }
   },
   async deleteSharedFile(id, path){
     if (path) await sb.storage.from('documents').remove([path]);

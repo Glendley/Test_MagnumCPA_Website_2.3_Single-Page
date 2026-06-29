@@ -700,8 +700,7 @@
     const a = await Magnum.getUpdates(user.id);
     const el = document.getElementById('updatesList');
     el.innerHTML = a.length ? a.slice().reverse().map(u =>
-      '<div class="feed-item"><div class="fd">'+escapeHtml(u.created_at?new Date(u.created_at).toLocaleString():'')+'</div><div class="ft">'+escapeHtml(u.text)+'</div>'+
-      (u.task?'<div class="fa"><a href="'+escapeHtml(u.task)+'" target="_blank" rel="noopener">View task ↗</a></div>':'')+'</div>'
+      '<div class="feed-item"><div class="fd">'+escapeHtml(u.created_at?new Date(u.created_at).toLocaleString():'')+'</div><div class="ft">'+escapeHtml(u.text)+'</div></div>'
     ).join('') : '<p class="empty">No updates yet. Your team will post account updates here.</p>';
   }
   async function renderMeetings(){
@@ -725,9 +724,10 @@
       const when = f.created_at ? new Date(f.created_at).toLocaleString() : '';
       const delBtn = f.uploaded_by === 'client'
         ? '<button class="del" onclick="delShared(\''+f.id+'\',\''+escapeHtml(f.path).replace(/'/g,"\\'")+'\')">Delete</button>' : '';
-      return '<div class="doc-row"><div class="fic">'+fileIcon(f.name)+'</div>'+
+      const note = f.note ? '<div style="flex-basis:100%;font-size:.85rem;color:#3c4757;margin-top:4px;">📝 '+escapeHtml(f.note)+'</div>' : '';
+      return '<div class="doc-row" style="flex-wrap:wrap;"><div class="fic">'+fileIcon(f.name)+'</div>'+
         '<div class="meta"><b>'+escapeHtml(f.name)+'</b><span>'+who+' • '+escapeHtml(when)+'</span></div>'+
-        '<a class="dl" href="'+url+'" target="_blank" rel="noopener">Download</a>'+delBtn+
+        '<a class="dl" href="'+url+'" target="_blank" rel="noopener">Download</a>'+delBtn+note+
       '</div>';
     }));
     el.innerHTML = rows.join('');

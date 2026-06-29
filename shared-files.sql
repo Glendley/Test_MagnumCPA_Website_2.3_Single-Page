@@ -19,9 +19,11 @@ create table if not exists public.shared_files (
   name        text,                       -- original file name
   path        text,                       -- storage path in the 'documents' bucket
   size        bigint,
+  note        text,                       -- admin's comment: what the file is for
   uploaded_by text not null check (uploaded_by in ('admin','client')),
   created_at  timestamptz not null default now()
 );
+alter table public.shared_files add column if not exists note text;
 
 alter table public.shared_files enable row level security;
 
