@@ -4,6 +4,14 @@
 --  Safe to re-run.
 -- =====================================================================
 
+-- ---------- ensure the admin check exists (so the policies below apply) ----
+-- Admin = the admin email, or any profile row with role = 'admin'.
+create or replace function public.is_admin()
+returns boolean language sql stable security definer set search_path = public as $$
+  select coalesce(lower(auth.jwt() ->> 'email'), '') in ('ask@magnumcpa.com')
+      or exists (select 1 from public.profiles where id = auth.uid() and role = 'admin');
+$$;
+
 -- ---------- table ---------------------------------------------------
 create table if not exists public.shared_files (
   id          uuid primary key default gen_random_uuid(),
