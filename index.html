@@ -21,8 +21,7 @@
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     color:#eef2f7;line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh;
-    background:linear-gradient(rgba(9,20,46,.74),rgba(9,20,46,.82)),url('images/hero-bg.jpg');
-    background-size:cover;background-position:right 28%;background-attachment:fixed;background-color:#0d1f4a;
+    background:#0d1f4a;
   }
   img{max-width:100%;height:auto;display:block;}
   a{color:inherit;text-decoration:none;}
@@ -74,7 +73,7 @@
 
   /* ---------- Hero (home) ---------- */
   .hero{position:relative;overflow:hidden;color:#fff;
-    background:#0d1f4a url('images/hero-bg.jpg') no-repeat;background-size:cover;background-position:right 28%;}
+    background:#0d1f4a url('images/hero-bg-2.jpg') no-repeat;background-size:cover;background-position:right 28%;}
   .hero::before{content:"";position:absolute;inset:0;pointer-events:none;
     background:linear-gradient(90deg,rgba(8,22,58,.94) 0%,rgba(8,22,58,.7) 34%,rgba(8,22,58,.25) 54%,rgba(8,22,58,0) 70%);}
   .hero-wrap{position:relative;z-index:2;display:flex;align-items:center;min-height:560px;padding:60px 0;}
@@ -313,7 +312,6 @@
     .foot-grid{grid-template-columns:1fr 1fr;}
   }
   @media (max-width:980px){
-    body{background-attachment:scroll;}
     .nav-toggle{display:block;}
     nav.main-nav{position:absolute;top:100%;left:0;right:0;background:var(--navy-dark);max-height:0;overflow:hidden;transition:max-height .35s ease;}
     nav.main-nav.open{max-height:760px;overflow:auto;}
