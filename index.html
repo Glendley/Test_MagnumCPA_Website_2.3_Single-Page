@@ -934,23 +934,29 @@
     if (revTimer) clearInterval(revTimer);
     if (revSlides > 1){ revTimer = setInterval(function(){ revMove(1); }, 7000); }
   }
-  (function(){
-    if (!revTrack){ return; }
+  function injectReviews(list){
     function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-    function inject(list){
-      (list||[]).forEach(function(f){
-        var stars = '★★★★★'.slice(0, f.rating||5);
-        var div = document.createElement('div');
-        div.className = 'review';
-        div.innerHTML = '<div class="stars">'+stars+'</div><h4>'+esc(f.name||'Client')+'</h4><p>'+esc(f.text||'')+'</p>';
-        revTrack.appendChild(div);
-      });
-      revInit();
-    }
-    if (window.Magnum && Magnum.getApprovedReviews){
-      Magnum.getApprovedReviews().then(inject).catch(function(){ revInit(); });
+    (list||[]).forEach(function(f){
+      var stars = '★★★★★'.slice(0, f.rating||5);
+      var div = document.createElement('div');
+      div.className = 'review';
+      div.innerHTML = '<div class="stars">'+stars+'</div><h4>'+esc(f.name||'Client')+'</h4><p>'+esc(f.text||'')+'</p>';
+      revTrack.appendChild(div);
+    });
+    revInit();
+  }
+  // Load admin-approved client reviews from Supabase, then (re)build the slider.
+  function loadApprovedReviews(){
+    if (!revTrack){ return; }
+    var sb2 = (typeof getSB === 'function') ? getSB() : null;
+    if (sb2){
+      sb2.from('reviews').select('name,rating,text').eq('approved', true).order('created_at', { ascending: true })
+        .then(function(res){ injectReviews(res.data || []); })
+        .catch(function(){ revInit(); });
     } else { revInit(); }
-  })();
+  }
+  if (document.readyState === 'complete') loadApprovedReviews();
+  else window.addEventListener('load', loadApprovedReviews);
 
   /* ===== Request a consultation (Acuity) ===== */
   var ACUITY_BASE = 'https://magnumcpa.as.me/schedule/c78873bb/appointment/7960861?appointmentTypeIds%5B%5D=7960861';
